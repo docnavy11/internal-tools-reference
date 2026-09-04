@@ -112,10 +112,10 @@ describe('client error reporting', () => {
 });
 
 describe('configuration documentation', () => {
-  const envKeys = Object.keys(
-    (envSchema as unknown as { _def: { schema: { shape: Record<string, unknown> } } })._def?.schema
-      ?.shape ?? {},
-  );
+  // envSchema is a z.object wrapped in refinements; unwrap to reach the shape.
+  let inner: z.ZodTypeAny = envSchema;
+  while (inner instanceof z.ZodEffects) inner = inner.innerType();
+  const envKeys = Object.keys((inner as z.ZodObject<z.ZodRawShape>).shape);
   it('env.ts, docs/CONFIG.md and .env.example agree on every variable', () => {
     expect(envKeys.length).toBeGreaterThan(20);
     const config = readFileSync('docs/CONFIG.md', 'utf8');
