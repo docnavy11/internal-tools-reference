@@ -4,8 +4,10 @@ Conventions for anyone changing this repository, human or agent.
 
 ## Status
 
-Design phase. There is no application code yet. The design lives in `docs/`. When
-code arrives, update this section and the status lines in `docs/ARCHITECTURE.md`.
+Phase 1 (skeleton) is implemented: build, env validation, database and migrations,
+HTTP platform, health endpoints, APP_MODE switch, placeholder page, tests, Docker,
+CI. Phases 2 to 7 in `docs/BUILD_PLAN.md` are not started. Update this section as
+phases land.
 
 ## Read first
 
@@ -40,6 +42,12 @@ code arrives, update this section and the status lines in `docs/ARCHITECTURE.md`
   (`adr/0008`).
 - The Vite client bundle must never import from `src/server`. Shared code goes in
   `src/shared` and must not use Node or DOM APIs.
+- CLI entry points go in `src/server/scripts/` only. Never detect "run directly" with
+  `import.meta.url` in a library module: the server is bundled into one file, so the
+  check is always true and the code runs on import.
+- Tests use the real test database through the per-test transaction in
+  `tests/server/setup.ts`. Never mock the database. Never point tests at the dev
+  database.
 
 ## Before finishing a change
 
@@ -49,7 +57,10 @@ code arrives, update this section and the status lines in `docs/ARCHITECTURE.md`
 
 ## Development
 
-- `docker compose up -d postgres`, then `npm run dev`. Dev login is enabled by
-  `.env.example` defaults and the seed creates `admin@local.test`.
+- `cp .env.example .env`, `docker compose up -d postgres`, `npm run db:migrate`,
+  `npm run db:seed`, `npm run dev`. API on 3000, client on 5174, Postgres on 5439.
+- `npm run check` runs typecheck, lint and Vitest. `npm run build && npm run test:e2e`
+  runs Playwright against the built app on port 3100.
 - `npm run db:reset` is for the local development database only. It asks for
   confirmation and refuses when `NODE_ENV=production`.
+- After changing a table: `npm run db:generate`, read the SQL, `npm run db:migrate`.

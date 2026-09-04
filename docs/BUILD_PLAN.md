@@ -4,7 +4,7 @@ Seven phases. Each has acceptance criteria that must pass before the next starts
 because each later phase depends on the earlier ones being trustworthy. "Tests" means
 Vitest against a real Postgres unless stated. Estimated sizes are relative, not hours.
 
-## Phase 1: skeleton (small)
+## Phase 1: skeleton (small) — implemented 2026-09-04
 
 Build tooling, database, container, CI, health.
 

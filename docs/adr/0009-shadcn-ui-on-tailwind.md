@@ -19,6 +19,19 @@ configuration, then committed. TanStack Table renders through the shadcn table
 primitives; the `DataTable` and form field components in `client/platform/` are
 ours and are the real reusable surface.
 
+## What the CLI actually produced (phase 1)
+
+`npx shadcn@4.21.0 init -b radix -p nova -y --no-monorepo` against the Vite project.
+The CLI's option set had changed from what the builder knew (`--base radix|base|aria`
+and named presets replaced `--style` and `--base-color`); the flags above were found
+by reading `--help` and trying the preset names it listed. It wrote `components.json`,
+rewrote `src/client/index.css` with Tailwind 4 `@theme inline` tokens in oklch, and
+added `radix-ui` (single package), `class-variance-authority`, `cn`, `lucide-react`,
+`tw-animate-css`, `shadcn` (runtime CSS import) and `@fontsource-variable/geist`.
+Aliases in `components.json` were then pointed at `src/client/platform/ui` and
+`src/client/lib`, and `shadcn add button card badge` confirmed components land there.
+Versions the CLI added with carets were pinned exactly.
+
 ## Consequences
 
 - No UI dependency to upgrade; the components are source in the repo.

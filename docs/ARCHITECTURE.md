@@ -4,8 +4,9 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **design phase, no application code yet.** See `BUILD_PLAN.md` for the order
-in which code will arrive.
+Status: **phase 1 (skeleton) implemented.** See `BUILD_PLAN.md` for what each phase
+adds. Where this document and the code disagree, the code was checked more recently;
+fix the document.
 
 ## 1. Goals and non-goals
 
@@ -39,7 +40,9 @@ at build time and recorded in `package.json`.
 | Runtime | Node.js | 22 LTS | Supported into 2027. |
 | Language | TypeScript, strict | 5.x | `noUncheckedIndexedAccess` on. |
 | Package manager | npm | bundled | Single package, no workspaces. Switch to pnpm is one line if the team prefers. |
-| Server | Hono + `@hono/node-server` | 4.x | Small, stable API, standard Request/Response. |
+| Server | Hono + `@hono/node-server` | 4.x / 1.x | Small, stable API, standard Request/Response. |
+| Server build | esbuild | 0.2x | Bundles `src/server/main.ts` into one ESM file; dependencies stay external. Avoids the `.js`-extension and path-alias problems of plain `tsc` output. |
+| Dev runner | tsx, concurrently | 4.x / 10.x | `npm run dev` runs the API with reload and the Vite dev server side by side. |
 | Database | PostgreSQL | 16 | Only external dependency. |
 | DB access | Drizzle ORM + drizzle-kit | 0.4x | Core query builder and migrations only; see `adr/0008`. |
 | Validation | Zod | 3.x pinned | Deliberately not 4; see `adr/0007`. |
@@ -50,7 +53,7 @@ at build time and recorded in `package.json`.
 | Server state | TanStack Query | 5.x | |
 | Tables | TanStack Table | 8.x | Headless; rendered with shadcn table primitives. |
 | Forms | react-hook-form + `@hookform/resolvers/zod` | 7.x | |
-| UI | shadcn/ui on Tailwind CSS | Tailwind 4 | Components are copied into the repo, so no upgrade dependency. See `adr/0009`. |
+| UI | shadcn/ui on Tailwind CSS | shadcn CLI 4, Tailwind 4 | Components are copied into `src/client/platform/ui`. The CLI installs the unified `radix-ui` package, `class-variance-authority`, `lucide-react`, `tw-animate-css` and the Geist font. See `adr/0009`. |
 | Logging | pino | 9.x | JSON to stdout. |
 | Email | nodemailer over SMTP | 6.x | Works with any provider that offers SMTP. |
 | Slack | plain `fetch` to `chat.postMessage` | n/a | No SDK. |
@@ -60,6 +63,15 @@ at build time and recorded in `package.json`.
 | Tests | Vitest, Playwright | current | Real Postgres in tests, no DB mocks. |
 | Lint/format | ESLint flat config + Prettier | 9.x | |
 | Container | Docker multi-stage, `node:22-alpine` | | |
+
+Dependency split: `dependencies` holds only what the server process imports at
+runtime (Hono, Drizzle, pg, pino, Zod). Everything bundled into the client by Vite
+(React, React Router, TanStack Query, the shadcn packages) and all build tooling is in
+`devDependencies`, so the production image installs with `--omit=dev` and stays small.
+
+Local ports: API on 3000, Vite dev server on 5174 (proxies `/api`, `/healthz`,
+`/readyz` to 3000), Postgres from compose on host port 5439. Non-default ports avoid
+clashes with other projects on a developer machine; all are overridable.
 
 ## 3. System shape
 
@@ -96,6 +108,7 @@ src/
     app.ts                     Hono app: middleware, routes, static serving
     worker.ts                  job loop and cron tick
     env.ts                     Zod-validated process.env, the only place it is read
+    scripts/                   CLI entry points only: migrate, seed, reset (see note below)
     platform/
       db/                      drizzle client, migration runner, transaction helper
       auth/                    oidc.ts, sessions.ts, magic-link.ts, routes.ts, middleware.ts
@@ -138,6 +151,15 @@ Dockerfile, docker-compose.yml, .env.example, CLAUDE.md
 A feature is exactly one folder in each of `shared`, `server`, `client`. Nothing
 about a feature lives anywhere else except one import line in each layer's registry.
 Cross-cutting concerns live in `platform/` and are not edited when adding a feature.
+
+Import alias: `@/` maps to `src/`, so client code imports `@/client/platform/ui/button`
+and `@/shared/api-types`. Server code uses relative imports (esbuild honours the alias
+too, but relative paths keep server files greppable without the alias).
+
+CLI entry points live only in `src/server/scripts/`. Library modules never detect
+"am I being run directly" via `import.meta.url`: inside the esbuild bundle every module
+shares the entry file's URL, so such a check is always true and the code runs at
+import time. Phase 1 hit exactly this bug.
 
 ## 5. Conventions
 
