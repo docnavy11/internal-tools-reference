@@ -24,7 +24,13 @@ export const accessLog: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
   const durationMs = Math.round(performance.now() - started);
   c.get('log').info(
-    { method: c.req.method, path: c.req.routePath, status: c.res.status, durationMs },
+    {
+      method: c.req.method,
+      path: c.req.routePath,
+      status: c.res.status,
+      durationMs,
+      userId: c.get('session')?.user.id,
+    },
     'request',
   );
 };

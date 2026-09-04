@@ -4,8 +4,9 @@ Enough to debug a production issue from logs alone, and a hook for an error trac
 
 ## Logging
 
-- pino, JSON to stdout, level from `LOG_LEVEL` (default `info`). Pretty output in
-  development through `pino-pretty` when `NODE_ENV !== 'production'`.
+- pino, JSON to stdout, level from `LOG_LEVEL` (default `info`). Pretty output
+  through `pino-pretty` only when `NODE_ENV === 'development'`; tests run silent
+  (`LOG_LEVEL=silent` in `vitest.config.ts`) and production stays JSON.
 - Base fields: `service` (tool name from `APP_NAME`), `mode` (`web`, `worker`),
   `version` (git sha baked into the image as `APP_VERSION`).
 - Request logger is a child with `requestId` and `userId`. One access line per

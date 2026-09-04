@@ -13,7 +13,8 @@ Postgres 16, Drizzle for tables and migrations, core query builder only
   a handful of customers and notes. `npm run db:seed`. Refuses to run when
   `NODE_ENV === 'production'`.
 - `platform/db/columns.ts`: shared column helpers `id()`, `timestamps()`,
-  `actorColumns()`, `softDelete()` so every table gets the same shape.
+  `softDelete()` so every table gets the same shape. `actorColumns()` lives next to the
+  `users` table in `platform/auth/table.ts` because it references it.
 - `platform/db/pagination.ts`: `paginate(query, { page, pageSize, sort, order })`
   returning `{ items, total, page, pageSize }`, with `pageSize` capped at 200.
 
@@ -41,9 +42,10 @@ See `../ARCHITECTURE.md` section 5. In addition:
 
 ## Tests
 
-`tests/server/setup.ts` connects to `DATABASE_URL_TEST`, runs migrations once, and
-gives each test a transaction that is rolled back afterwards. Tests never mock the
-database.
+`tests/server/global-setup.ts` runs migrations against `DATABASE_URL_TEST` once per
+run. `tests/server/setup.ts` gives each test a transaction that is rolled back
+afterwards (code under test joins it through `getDb()`; nested transactions become
+savepoints). Tests never mock the database.
 
 ## Done when
 

@@ -104,7 +104,9 @@ Block 11 completion, security pass, docs.
 - Security headers, rate limiting, redaction review, client error reporting,
   Sentry driver file.
 - Security review of auth code against the OIDC flow checklist in block 01.
-- Full Playwright smoke suite, CI running it on the built image.
+- Full Playwright smoke suite. Today Playwright and the CI e2e job run
+  `node dist/server/main.js` on the host; this phase adds a CI step that runs the
+  smoke suite against the Docker image so the image itself is exercised.
 - Command palette.
 - README quick start, `CONFIG.md` verified against `env.ts` by a test that fails if
   a variable exists in one and not the other.

@@ -4,6 +4,10 @@ All configuration is environment variables, read and validated once in
 `src/server/env.ts`. Required means the process refuses to start without it.
 Phase 7 adds a test that fails when this file and `env.ts` disagree.
 
+Locally, `.env` is loaded with Node's `process.loadEnvFile`, which never overrides a
+variable already set in the shell. If something behaves unexpectedly, check for a
+stray exported variable (a `PORT` exported in your profile is the classic case).
+
 ## Core
 
 | Variable | Required | Default | Purpose |

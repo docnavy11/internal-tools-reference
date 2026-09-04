@@ -45,7 +45,7 @@ at build time and recorded in `package.json`.
 | Dev runner | tsx, concurrently | 4.x / 10.x | `npm run dev` runs the API with reload and the Vite dev server side by side. |
 | Database | PostgreSQL | 16 | Only external dependency. |
 | DB access | Drizzle ORM + drizzle-kit | 0.4x | Core query builder and migrations only; see `adr/0008`. |
-| Validation | Zod | 3.x pinned | Deliberately not 4; see `adr/0007`. |
+| Validation | Zod + `@hono/zod-validator` | 3.x pinned | Deliberately not 4; see `adr/0007`. The validator is wrapped in `platform/http/validate.ts` so failures use the error envelope. |
 | Auth | Own code: generic OIDC client + session table | n/a | `jose` for ID token verification. See `adr/0005`. |
 | Jobs | Own code: Postgres table + `SKIP LOCKED` worker | n/a | `cron-parser` for schedules. See `adr/0006`. |
 | Front end | React + Vite | 19 / current | SPA, no server rendering. |

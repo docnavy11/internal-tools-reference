@@ -29,6 +29,7 @@ export const users = pgTable(
   (t) => [
     check('users_role_check', sql`${t.role} in (${inList(roles)})`),
     check('users_status_check', sql`${t.status} in (${inList(userStatuses)})`),
+    index('users_invited_by_idx').on(t.invitedBy),
   ],
 );
 
