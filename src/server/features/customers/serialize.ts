@@ -10,7 +10,7 @@ type Row = typeof customers.$inferSelect;
 type OwnerRow = Pick<typeof users.$inferSelect, 'id' | 'name' | 'email'> | null;
 
 // API shape. Also what lands in audit snapshots, so nothing internal leaks.
-export function serializeCustomer(row: Row, owner: OwnerRow): Customer {
+export function serializeCustomer(row: Row, owner: OwnerRow, notesCount = 0): Customer {
   return {
     id: row.id,
     name: row.name,
@@ -20,6 +20,7 @@ export function serializeCustomer(row: Row, owner: OwnerRow): Customer {
     tags: row.tags,
     owner: owner ? { id: owner.id, name: owner.name, email: owner.email } : null,
     notes: row.notes,
+    notesCount,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt?.toISOString() ?? null,
     deletedAt: row.deletedAt?.toISOString() ?? null,

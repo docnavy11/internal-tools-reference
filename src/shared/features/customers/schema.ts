@@ -29,6 +29,7 @@ export const customerSchema = z.object({
   tags: z.array(z.string()),
   owner: userRefSchema.nullable(),
   notes: z.string().nullable(),
+  notesCount: z.number().int(), // derived: live notes attached to this customer
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime().nullable(),
   deletedAt: z.string().datetime().nullable(),

@@ -13,14 +13,24 @@ export const permissions = [
   'customers:read',
   'customers:write',
   'customers:delete',
+  'notes:read',
+  'notes:write',
 ] as const;
 export type Permission = (typeof permissions)[number];
 
 export const rolePermissions: Record<Role, readonly Permission[]> = {
   admin: permissions,
-  member: ['customers:read', 'customers:write'],
-  viewer: ['customers:read'],
+  member: ['customers:read', 'customers:write', 'notes:read', 'notes:write'],
+  viewer: ['customers:read', 'notes:read'],
 };
 
 export const userStatuses = ['active', 'disabled'] as const;
 export type UserStatus = (typeof userStatuses)[number];
+
+// Permissions that guard records of a given entity type, used by cross-cutting code such
+// as file downloads and history endpoints. A new entity adds one line.
+export const entityPermissions: Record<string, { read: Permission; write: Permission }> = {
+  customer: { read: 'customers:read', write: 'customers:write' },
+  note: { read: 'notes:read', write: 'notes:write' },
+  user: { read: 'users:manage', write: 'users:manage' },
+};
