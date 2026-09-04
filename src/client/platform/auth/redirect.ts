@@ -6,6 +6,9 @@
 export function safeRedirectPath(value: string | null | undefined): string | null {
   if (!value) return null;
   if (!value.startsWith('/') || value.startsWith('//')) return null;
+  // Browsers strip tabs and newlines from URLs, so "/<tab>/evil" would become "//evil".
+  // eslint-disable-next-line no-control-regex
+  if (/[\s\\\u0000-\u001f\u007f]/.test(value)) return null;
   return value;
 }
 

@@ -17,6 +17,11 @@ const provider: OidcProvider = {
   clientSecret: 'secret',
   discoveryUrl: `${ISSUER}/.well-known/openid-configuration`,
   scopes: 'openid email profile',
+  identity: { kind: 'verified_claim' },
+};
+const tenantProvider: OidcProvider = {
+  ...provider,
+  identity: { kind: 'tenant', allowedTenants: ['tenant-42'] },
 };
 
 let privateKey: CryptoKey;
@@ -53,14 +58,15 @@ function installFakeIdp(opts: Partial<FakeIdp> = {}): FakeIdp {
     if (url === `${ISSUER}/token`) {
       const params = new URLSearchParams(String(init?.body));
       idp.tokenRequests.push(params);
-      const idToken = await new SignJWT({
+      const claims: Record<string, unknown> = {
         email: 'person@company.com',
         email_verified: true,
         name: 'Person',
         picture: 'https://img.test/p.png',
-        nonce: idp.claims.nonce,
         ...idp.claims,
-      })
+      };
+      for (const k of Object.keys(claims)) if (claims[k] === undefined) delete claims[k];
+      const idToken = await new SignJWT(claims)
         .setProtectedHeader({ alg: 'RS256', kid: 'k1' })
         .setIssuer((idp.claims.iss as string) ?? ISSUER)
         .setAudience((idp.claims.aud as string) ?? provider.clientId)
@@ -154,17 +160,58 @@ describe('oidc client', () => {
     }
   });
 
-  it('accepts a tenant-specific issuer when discovery carries the Microsoft placeholder', async () => {
+  it('multi-tenant providers: accepts only allowlisted tenants and never trusts the token for the issuer', async () => {
     const idp = installFakeIdp({ issuer: 'https://login.test/{tenantid}/v2.0' });
-    const { state, stored } = await begin();
+    let flow = await begin();
     idp.claims = {
-      nonce: stored.nonce,
+      nonce: flow.stored.nonce,
+      iss: 'https://login.test/tenant-42/v2.0',
+      tid: 'tenant-42',
+      email: undefined,
+      preferred_username: 'person@company.com',
+    };
+    const identity = await withTransaction((tx) =>
+      completeAuthorization(tx, tenantProvider, { code: 'abc', state: flow.state }),
+    );
+    expect(identity.email).toBe('person@company.com');
+
+    // A token from another tenant, with a matching issuer for that tenant, is refused even
+    // though it is validly signed by the shared JWKS.
+    flow = await begin();
+    idp.claims = {
+      nonce: flow.stored.nonce,
+      iss: 'https://login.test/evil-tenant/v2.0',
+      tid: 'evil-tenant',
+      email: 'victim@company.com',
+    };
+    await expect(
+      withTransaction((tx) =>
+        completeAuthorization(tx, tenantProvider, { code: 'abc', state: flow.state }),
+      ),
+    ).rejects.toMatchObject({ code: 'provider_error' });
+
+    // A verified_claim provider cannot be used with a multi-tenant discovery document.
+    flow = await begin();
+    idp.claims = {
+      nonce: flow.stored.nonce,
       iss: 'https://login.test/tenant-42/v2.0',
       tid: 'tenant-42',
     };
-    const identity = await withTransaction((tx) =>
-      completeAuthorization(tx, provider, { code: 'abc', state }),
-    );
-    expect(identity.email).toBe('person@company.com');
+    await expect(
+      withTransaction((tx) =>
+        completeAuthorization(tx, provider, { code: 'abc', state: flow.state }),
+      ),
+    ).rejects.toMatchObject({ code: 'provider_error' });
+  });
+
+  it('verified_claim providers require email_verified to be exactly true', async () => {
+    const idp = installFakeIdp();
+    const flow = await begin();
+    idp.claims = { nonce: flow.stored.nonce, email_verified: undefined };
+    await expect(
+      withTransaction((tx) =>
+        completeAuthorization(tx, provider, { code: 'abc', state: flow.state }),
+      ),
+    ).rejects.toMatchObject({ code: 'provider_error' });
   });
 });

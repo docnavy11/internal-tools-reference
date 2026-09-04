@@ -1,5 +1,6 @@
 import { count, eq } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { env } from '../../env';
 import {
   devLoginInput,
@@ -37,6 +38,7 @@ import {
 } from './sessions';
 import { users } from './table';
 
+const OIDC_STATE_COOKIE = 'oidc_state';
 const devLoginEnabled = () => env.AUTH_DEV_LOGIN && env.NODE_ENV !== 'production';
 
 export function authRoutes(): Hono<AppEnv> {
@@ -62,6 +64,15 @@ export function authRoutes(): Hono<AppEnv> {
     const redirectTo = safeRedirect(c.req.query('redirect_to'));
     if (!provider) return loginError(c, 'unknown_provider', redirectTo);
     const url = await withTransaction((tx) => beginAuthorization(tx, provider, redirectTo));
+    // Bind the flow to this browser: the callback must present the same state in a
+    // cookie, so a callback URL captured by an attacker cannot log someone else in.
+    setCookie(c, OIDC_STATE_COOKIE, new URL(url).searchParams.get('state')!, {
+      httpOnly: true,
+      secure: env.APP_URL.startsWith('https://'),
+      sameSite: 'Lax',
+      path: '/api/auth/oidc',
+      maxAge: 10 * 60,
+    });
     return c.redirect(url);
   });
 
@@ -72,6 +83,9 @@ export function authRoutes(): Hono<AppEnv> {
     const state = c.req.query('state');
     if (!code || !state)
       return loginError(c, c.req.query('error') ? 'provider_error' : 'invalid_state', '/');
+    const bound = getCookie(c, OIDC_STATE_COOKIE);
+    deleteCookie(c, OIDC_STATE_COOKIE, { path: '/api/auth/oidc' });
+    if (!bound || bound !== state) return loginError(c, 'invalid_state', '/');
 
     try {
       const outcome = await withTransaction<SignInOutcome>(async (tx) => {
@@ -81,7 +95,7 @@ export function authRoutes(): Hono<AppEnv> {
         if (!result.ok) return { redirectTo, error: result.code };
         const token = await createSession(tx, {
           userId: result.user.id,
-          ip: clientIp(c.req.raw.headers),
+          ip: clientIp(c),
           userAgent: c.req.header('user-agent'),
         });
         return { redirectTo, token };
@@ -133,7 +147,7 @@ export function authRoutes(): Hono<AppEnv> {
       if (!result.ok) return { error: result.code, redirectTo };
       const sessionToken = await createSession(tx, {
         userId: result.user.id,
-        ip: clientIp(c.req.raw.headers),
+        ip: clientIp(c),
         userAgent: c.req.header('user-agent'),
       });
       return { token: sessionToken, redirectTo };
@@ -179,7 +193,7 @@ export function authRoutes(): Hono<AppEnv> {
       }
       return createSession(tx, {
         userId: user.id,
-        ip: clientIp(c.req.raw.headers),
+        ip: clientIp(c),
         userAgent: c.req.header('user-agent'),
       });
     });

@@ -42,9 +42,11 @@ stray exported variable (a `PORT` exported in your profile is the classic case).
 | `AUTH_MICROSOFT_CLIENT_ID` | no | | enables Microsoft sign-in |
 | `AUTH_MICROSOFT_CLIENT_SECRET` | with id | | |
 | `AUTH_MICROSOFT_TENANT` | with id | `organizations` | tenant id or `organizations` |
+| `AUTH_MICROSOFT_ALLOWED_TENANTS` | when tenant is organizations/common | | comma-separated tenant ids whose users may sign in; a concrete `AUTH_MICROSOFT_TENANT` is its own allowlist |
 | `AUTH_MAGIC_LINK` | no | `false` | enables magic link sign-in, needs email configured |
 | `AUTH_DEV_LOGIN` | no | `false` | dev login, ignored in production |
 | `SESSION_TTL_DAYS` | no | `30` | |
+| `TRUST_PROXY_HOPS` | no | `0` | reverse proxies in front of the app; 0 ignores `x-forwarded-for`, N takes the Nth address from the right |
 
 ## Jobs
 
@@ -85,7 +87,7 @@ stray exported variable (a `PORT` exported in your profile is the classic case).
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `SENTRY_DSN` | no | | enables the Sentry error reporter driver |
+| `SENTRY_DSN` | no | | enables the Sentry error reporter driver (`npm install @sentry/node`) |
 | `AUDIT_RETENTION_DAYS` | no | | when set, enables pruning of audit rows |
 
 ## Integrations

@@ -47,8 +47,22 @@ export const envSchema = z
     AUTH_MICROSOFT_CLIENT_ID: optionalString(),
     AUTH_MICROSOFT_CLIENT_SECRET: optionalString(),
     AUTH_MICROSOFT_TENANT: z.string().min(1).default('organizations'),
+    // Tenant ids whose users may sign in. Required when AUTH_MICROSOFT_TENANT is
+    // 'organizations' or 'common': those endpoints sign tokens for every tenant.
+    AUTH_MICROSOFT_ALLOWED_TENANTS: z
+      .string()
+      .default('')
+      .transform((v) =>
+        v
+          .split(',')
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean),
+      ),
     AUTH_MAGIC_LINK: bool,
     SESSION_TTL_DAYS: z.coerce.number().int().positive().default(30),
+    // Reverse proxies in front of the app. 0 means the socket address is the client;
+    // N means take the Nth address from the right of x-forwarded-for.
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(0),
 
     JOBS_CONCURRENCY: z.coerce.number().int().min(1).max(64).default(4),
     JOBS_POLL_MS: z.coerce.number().int().min(50).default(1000),
@@ -96,6 +110,17 @@ export const envSchema = z
     message: 'required when AUTH_MICROSOFT_CLIENT_ID is set',
     path: ['AUTH_MICROSOFT_CLIENT_SECRET'],
   })
+  .refine(
+    (e) =>
+      !e.AUTH_MICROSOFT_CLIENT_ID ||
+      !['organizations', 'common', 'consumers'].includes(e.AUTH_MICROSOFT_TENANT.toLowerCase()) ||
+      e.AUTH_MICROSOFT_ALLOWED_TENANTS.length > 0,
+    {
+      message:
+        'required when AUTH_MICROSOFT_TENANT is organizations/common: list the tenant ids allowed to sign in',
+      path: ['AUTH_MICROSOFT_ALLOWED_TENANTS'],
+    },
+  )
   .refine((e) => e.EMAIL_DRIVER !== 'smtp' || (e.SMTP_URL && e.EMAIL_FROM), {
     message: 'SMTP_URL and EMAIL_FROM are required when EMAIL_DRIVER=smtp',
     path: ['EMAIL_DRIVER'],

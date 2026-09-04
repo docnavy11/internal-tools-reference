@@ -18,7 +18,7 @@ export const sessionContext: MiddlewareHandler<AppEnv> = async (c, next) => {
           type: 'user',
           userId: session.user.id,
           requestId: c.get('requestId'),
-          ip: clientIp(c.req.raw.headers),
+          ip: clientIp(c),
         }
       : { type: 'system', requestId: c.get('requestId') },
   );

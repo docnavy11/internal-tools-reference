@@ -99,8 +99,22 @@ Dev login
   with the console driver until phase 5 moves it into a job.
 - CSRF: Origin must match `APP_URL` when present; requests without Origin are checked
   against `Sec-Fetch-Site`; requests with neither header (curl, tests) pass.
-- Microsoft issuer: the discovery document for `organizations`/`common` carries a
-  literal `{tenantid}`; the client substitutes the token's `tid` before comparing.
+- Microsoft: the discovery document for `organizations`/`common` carries a literal
+  `{tenantid}` in the issuer and its JWKS signs tokens for every tenant, so the trust
+  boundary is `AUTH_MICROSOFT_ALLOWED_TENANTS` (required in that mode; a concrete tenant id
+  in `AUTH_MICROSOFT_TENANT` is its own allowlist). The token's `tid` must be allowlisted,
+  the acceptable issuers are derived from the allowlist (never from the token), and only
+  then is `email` or `preferred_username` accepted as the identity. Google tokens must
+  carry `email_verified: true`. Found by the phase 7 security review; the earlier version
+  compared the token's issuer against itself.
+- Login CSRF: `start` sets an `oidc_state` cookie (HttpOnly, 10 minutes, path
+  `/api/auth/oidc`) and the callback requires it to equal the `state` parameter, so a
+  callback URL captured by an attacker cannot sign a victim into the attacker's account.
+- Client IP for rate limits, sessions and audit metadata comes from the socket unless
+  `TRUST_PROXY_HOPS` says how many `x-forwarded-for` hops to trust; the leftmost value is
+  never used.
+- Redirect targets refuse whitespace and control characters (browsers strip tabs and
+  newlines, which would turn `/<tab>/evil` into `//evil`).
 - Not verified against a real Google or Microsoft tenant yet. Tests use a fake
   provider with locally signed RS256 tokens (`tests/server/oidc.test.ts`).
 

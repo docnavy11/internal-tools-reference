@@ -160,3 +160,100 @@ describe('magic link rate limit', () => {
     }
   });
 });
+
+describe('oidc login flow binding', () => {
+  it('requires the state cookie set at start to be presented at the callback', async () => {
+    const { SignJWT, exportJWK, generateKeyPair } = await import('jose');
+    const { setOidcFetch } = await import('../../src/server/platform/auth/oidc');
+    const pair = await generateKeyPair('RS256');
+    const jwk = { ...(await exportJWK(pair.publicKey)), kid: 'k1', alg: 'RS256', use: 'sig' };
+    const ISSUER = 'https://accounts.google.com';
+    let nonce = '';
+    setOidcFetch(async (input, init) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/.well-known/openid-configuration'))
+        return Response.json({
+          issuer: ISSUER,
+          authorization_endpoint: `${ISSUER}/o/oauth2/v2/auth`,
+          token_endpoint: `${ISSUER}/token`,
+          jwks_uri: `${ISSUER}/jwks`,
+        });
+      if (url === `${ISSUER}/jwks`) return Response.json({ keys: [jwk] });
+      if (url === `${ISSUER}/token`) {
+        void init;
+        const idToken = await new SignJWT({
+          email: 'first@example.com',
+          email_verified: true,
+          nonce,
+        })
+          .setProtectedHeader({ alg: 'RS256', kid: 'k1' })
+          .setIssuer(ISSUER)
+          .setAudience('gclient')
+          .setIssuedAt()
+          .setExpirationTime('5m')
+          .sign(pair.privateKey);
+        return Response.json({ id_token: idToken });
+      }
+      return new Response('nope', { status: 404 });
+    });
+    const saved = { id: env.AUTH_GOOGLE_CLIENT_ID, secret: env.AUTH_GOOGLE_CLIENT_SECRET };
+    env.AUTH_GOOGLE_CLIENT_ID = 'gclient';
+    env.AUTH_GOOGLE_CLIENT_SECRET = 'gsecret';
+    try {
+      const start = await app.request('/api/auth/oidc/google/start?redirect_to=/customers');
+      expect(start.status).toBe(302);
+      const location = new URL(start.headers.get('location')!);
+      const state = location.searchParams.get('state')!;
+      nonce = location.searchParams.get('nonce')!;
+      const stateCookie = /oidc_state=([^;]+)/.exec(start.headers.get('set-cookie') ?? '')?.[1];
+      expect(stateCookie).toBe(state);
+
+      // Callback without the browser cookie: refused, state row stays unconsumed.
+      const stolen = await app.request(`/api/auth/oidc/google/callback?code=abc&state=${state}`);
+      expect(stolen.headers.get('location')).toMatch(/error=invalid_state/);
+
+      const genuine = await app.request(`/api/auth/oidc/google/callback?code=abc&state=${state}`, {
+        headers: { cookie: `oidc_state=${state}` },
+      });
+      expect(genuine.status).toBe(302);
+      expect(genuine.headers.get('location')).toBe('/customers');
+      expect(genuine.headers.get('set-cookie')).toMatch(/sid=/);
+    } finally {
+      env.AUTH_GOOGLE_CLIENT_ID = saved.id;
+      env.AUTH_GOOGLE_CLIENT_SECRET = saved.secret;
+      setOidcFetch(null);
+    }
+  });
+});
+
+describe('redirect and client ip hardening', () => {
+  it('refuses redirect targets with whitespace or control characters', async () => {
+    const { safeRedirect } = await import('../../src/server/platform/http/redirect');
+    expect(safeRedirect('/ok/path?x=1')).toBe('/ok/path?x=1');
+    expect(safeRedirect('/\t/evil.test')).toBe('/');
+    expect(safeRedirect('/\n/evil.test')).toBe('/');
+    expect(safeRedirect('//evil.test')).toBe('/');
+    expect(safeRedirect('https://evil.test')).toBe('/');
+    expect(safeRedirect('/\\evil.test')).toBe('/');
+  });
+
+  it('ignores x-forwarded-for unless proxy hops are trusted', async () => {
+    const { Hono } = await import('hono');
+    const { clientIp } = await import('../../src/server/platform/http/rate-limit');
+    const probe = new Hono().get('/ip', (c) => c.text(clientIp(c)));
+    const headers = { 'x-forwarded-for': '1.1.1.1, 2.2.2.2, 3.3.3.3' };
+    const hops = env.TRUST_PROXY_HOPS;
+    try {
+      env.TRUST_PROXY_HOPS = 0;
+      expect(await (await probe.request('/ip', { headers })).text()).toBe('unknown');
+      env.TRUST_PROXY_HOPS = 1;
+      expect(await (await probe.request('/ip', { headers })).text()).toBe('3.3.3.3');
+      env.TRUST_PROXY_HOPS = 2;
+      expect(await (await probe.request('/ip', { headers })).text()).toBe('2.2.2.2');
+      env.TRUST_PROXY_HOPS = 5;
+      expect(await (await probe.request('/ip', { headers })).text()).toBe('unknown');
+    } finally {
+      env.TRUST_PROXY_HOPS = hops;
+    }
+  });
+});
