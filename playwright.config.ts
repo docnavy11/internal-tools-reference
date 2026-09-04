@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 // config (CI builds before running). Fail fast with a clear message instead of
 // letting webServer time out with an opaque "command exited" error.
 const serverEntry = path.resolve(import.meta.dirname, 'dist/server/main.js');
-if (!existsSync(serverEntry)) {
+if (!process.env.E2E_BASE_URL && !existsSync(serverEntry)) {
   throw new Error(`dist/server/main.js not found. Run "npm run build" before "npm run test:e2e".`);
 }
 
@@ -22,7 +22,10 @@ if (!process.env.DATABASE_URL_TEST) {
 }
 
 const PORT = 3100;
-const baseURL = `http://localhost:${PORT}`;
+// E2E_BASE_URL runs the suite against an already running server (CI runs it against the
+// Docker image). Without it the config starts `node dist/server/main.js` itself.
+const externalBaseURL = process.env.E2E_BASE_URL;
+const baseURL = externalBaseURL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -40,23 +43,25 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'node dist/server/main.js',
-    url: `${baseURL}/readyz`,
-    reuseExistingServer: false,
-    timeout: 60_000,
-    env: {
-      ...process.env,
-      NODE_ENV: 'test',
-      APP_MODE: 'all',
-      PORT: String(PORT),
-      MIGRATE_ON_START: 'true',
-      AUTH_DEV_LOGIN: 'true',
-      LOG_LEVEL: 'warn',
-      APP_URL: baseURL,
-      // The example integration is on in e2e so the webhooks admin page has data.
-      EXAMPLE_VENDOR_API_KEY: 'e2e-key',
-      EXAMPLE_VENDOR_WEBHOOK_SECRET: 'e2e-webhook-secret',
-    },
-  },
+  webServer: externalBaseURL
+    ? undefined
+    : {
+        command: 'node dist/server/main.js',
+        url: `${baseURL}/readyz`,
+        reuseExistingServer: false,
+        timeout: 60_000,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          APP_MODE: 'all',
+          PORT: String(PORT),
+          MIGRATE_ON_START: 'true',
+          AUTH_DEV_LOGIN: 'true',
+          LOG_LEVEL: 'warn',
+          APP_URL: baseURL,
+          // The example integration is on in e2e so the webhooks admin page has data.
+          EXAMPLE_VENDOR_API_KEY: 'e2e-key',
+          EXAMPLE_VENDOR_WEBHOOK_SECRET: 'e2e-webhook-secret',
+        },
+      },
 });

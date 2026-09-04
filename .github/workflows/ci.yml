@@ -144,3 +144,73 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+
+  e2e-image:
+    name: e2e (docker image)
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create test database
+        run: PGPASSWORD=app psql -h localhost -U app -d app -c 'CREATE DATABASE app_test'
+
+      - name: Build image
+        run: docker build -t app:e2e --build-arg APP_VERSION=${{ github.sha }} .
+
+      # Same image that ships. --network host so the container reaches the Postgres
+      # service on localhost like the job does.
+      - name: Run image
+        run: |
+          docker run -d --name app-e2e --network host \
+            -e NODE_ENV=test -e APP_MODE=all -e PORT=3100 -e APP_URL=http://localhost:3100 \
+            -e MIGRATE_ON_START=true -e AUTH_DEV_LOGIN=true -e LOG_LEVEL=warn \
+            -e SESSION_SECRET=ci-only-secret-ci-only-secret-ci-only-secret-40chars \
+            -e DATABASE_URL=postgres://app:app@localhost:5432/app_test \
+            -e EXAMPLE_VENDOR_API_KEY=e2e-key -e EXAMPLE_VENDOR_WEBHOOK_SECRET=e2e-webhook-secret \
+            app:e2e
+          for i in $(seq 1 30); do curl -sf http://localhost:3100/readyz && break; sleep 1; done
+          curl -sf http://localhost:3100/readyz
+
+      - name: Run e2e against the image
+        env:
+          E2E_BASE_URL: http://localhost:3100
+        run: npm run test:e2e
+
+      - name: Container logs
+        if: failure()
+        run: docker logs app-e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-image
+          path: playwright-report/

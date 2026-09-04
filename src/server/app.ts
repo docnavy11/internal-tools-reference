@@ -4,6 +4,8 @@ import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
 import { jsonBodyLimit } from './platform/http/body-limit';
+import { securityHeaders } from './platform/http/security-headers';
+import { clientErrorRoutes } from './platform/http/client-errors';
 import { authRoutes } from './platform/auth/routes';
 import { auditRoutes } from './platform/audit/routes';
 import { jobRoutes } from './platform/jobs/routes';
@@ -23,17 +25,27 @@ import { userRoutes } from './platform/users/routes';
 import { clientDistDir } from './paths';
 import { registerFeatures } from './features';
 
-export function createApp(): Hono<AppEnv> {
+export interface AppOptions {
+  // Tests inject a failing probe to exercise the 503 path.
+  pingDatabase?: () => Promise<boolean>;
+  // Tests add routes here, before the SPA catch-all would swallow them.
+  testRoutes?: (app: Hono<AppEnv>) => void;
+}
+
+export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
+  const ping = options.pingDatabase ?? pingDatabase;
 
   app.use(requestContext);
+  app.use(securityHeaders);
   app.use(accessLog);
   app.onError(handleError);
   app.notFound(apiNotFound);
+  options.testRoutes?.(app);
 
   app.get('/healthz', (c) => c.json({ ok: true }));
   app.get('/readyz', async (c) => {
-    const ok = await pingDatabase();
+    const ok = await ping();
     return c.json({ ok, database: ok ? 'up' : 'down' }, ok ? 200 : 503);
   });
 
@@ -47,6 +59,7 @@ export function createApp(): Hono<AppEnv> {
       : jsonBodyLimit(c, next),
   );
   api.route('/', authRoutes());
+  api.route('/', clientErrorRoutes());
   api.route('/', userRoutes());
   api.route('/', auditRoutes());
   api.route('/', jobRoutes());

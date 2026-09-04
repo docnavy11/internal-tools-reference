@@ -15,7 +15,7 @@ function prettyAvailable(): boolean {
   }
 }
 
-export const logger: Logger = pino({
+export const loggerOptions: pino.LoggerOptions = {
   level: env.LOG_LEVEL,
   base: { service: env.APP_NAME, mode: env.APP_MODE, version: env.APP_VERSION },
   redact: {
@@ -41,4 +41,6 @@ export const logger: Logger = pino({
           },
         }
       : undefined,
-});
+};
+
+export const logger: Logger = pino(loggerOptions);

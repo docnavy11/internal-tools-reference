@@ -3,6 +3,7 @@ import { and, eq, inArray, lt, lte, sql } from 'drizzle-orm';
 import { env } from '../../env';
 import { db as pool, getDb, withTransaction, type DbOrTx } from '../db/client';
 import { logger } from '../http/logger';
+import { reportError } from '../http/error-reporter';
 import {
   getJobDefinition,
   listScheduleDefinitions,
@@ -110,6 +111,7 @@ export async function runJob(job: JobRow, db: DbOrTx = getDb()): Promise<RunOutc
     const exhausted = job.attempts >= job.maxAttempts;
     if (err instanceof NonRetryableError || exhausted) {
       await finish({ status: 'dead', lastError: error, finishedAt: new Date() });
+      reportError(err, { jobId: job.id, jobName: job.name, attempt: job.attempts, exhausted });
       log.error({ err, exhausted }, 'job dead');
       return { status: 'dead', error };
     }

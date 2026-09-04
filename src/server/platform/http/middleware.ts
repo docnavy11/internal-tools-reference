@@ -5,6 +5,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { ApiError } from '../../../shared/api-types';
 import { AppError } from './errors';
 import { logger } from './logger';
+import { reportError } from './error-reporter';
 import type { AppEnv } from './types';
 
 // Reuse an inbound x-request-id (load balancers set one) or mint a UUID. Echo it in
@@ -50,7 +51,12 @@ export function handleError(err: Error, c: Context<AppEnv>): Response {
     const status = err.status as ContentfulStatusCode;
     return c.json(errorBody(c, `http_${status}`, err.message || 'Request failed'), status);
   }
-  c.get('log').error({ err }, 'unhandled error');
+  reportError(err, {
+    requestId: c.get('requestId'),
+    userId: c.get('session')?.user.id,
+    path: c.req.routePath,
+    method: c.req.method,
+  });
   return c.json(errorBody(c, 'internal', 'Internal server error'), 500);
 }
 

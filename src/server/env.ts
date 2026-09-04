@@ -54,6 +54,7 @@ export const envSchema = z
     JOBS_POLL_MS: z.coerce.number().int().min(50).default(1000),
     JOBS_RETENTION_DAYS: z.coerce.number().int().min(1).default(30),
     JOBS_SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).default(30000),
+    SENTRY_DSN: optionalString(),
     AUDIT_RETENTION_DAYS: z.preprocess(
       (v) => (v === '' ? undefined : v),
       z.coerce.number().int().min(1).optional(),

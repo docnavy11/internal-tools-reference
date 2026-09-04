@@ -6,6 +6,7 @@ import { createApp } from './app';
 import { closeDatabase, pingDatabase } from './platform/db/client';
 import { runMigrations } from './platform/db/migrate';
 import { logger } from './platform/http/logger';
+import { initErrorReporter } from './platform/http/error-reporter';
 import { startWorker, type Worker } from './worker';
 
 const SHUTDOWN_TIMEOUT_MS = 30_000;
@@ -40,6 +41,7 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 process.on('SIGINT', () => void shutdown('SIGINT'));
 
 async function main(): Promise<void> {
+  await initErrorReporter();
   const runsWeb = env.APP_MODE === 'web' || env.APP_MODE === 'all';
   const runsWorker = env.APP_MODE === 'worker' || env.APP_MODE === 'all';
 
