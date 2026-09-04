@@ -173,6 +173,28 @@ describe('job queue under concurrency (real pool, outside the test transaction)'
     await pool.delete(jobs).where(eq(jobs.name, echo.name));
   });
 
+  it('two schedulers ticking at once fire a due schedule exactly once', async () => {
+    const { schedules: schedulesTable } = await import('../../src/server/platform/jobs/table');
+    const { syncSchedules: sync } = await import('../../src/server/platform/jobs/worker');
+    const { eq: eqOp } = await import('drizzle-orm');
+    await sync(pool);
+    await pool
+      .update(schedulesTable)
+      .set({ nextRunAt: new Date(Date.now() - 1000), enabled: true })
+      .where(eqOp(schedulesTable.name, 'test.echo.hourly'));
+    const fired = await Promise.all([tickScheduler(), tickScheduler(), tickScheduler()]);
+    expect(fired.reduce((a, b) => a + b, 0)).toBe(1);
+    const queued = await pool.select().from(jobs).where(eqOp(jobs.name, echo.name));
+    expect(
+      queued.filter((j) => j.dedupeKey?.startsWith('schedule:test.echo.hourly:')),
+    ).toHaveLength(1);
+    await pool.delete(jobs).where(eqOp(jobs.name, echo.name));
+    await pool
+      .update(schedulesTable)
+      .set({ enabled: false })
+      .where(eqOp(schedulesTable.name, 'test.echo.hourly'));
+  });
+
   it('never hands the same job to two workers', async () => {
     const ids = new Set<string>();
     for (let i = 0; i < 20; i++) {

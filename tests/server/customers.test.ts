@@ -98,7 +98,9 @@ describe('customers API', () => {
     expect(updated.owner).toEqual({ id: owner.user.id, name: 'o', email: 'o@example.com' });
     expect(updated.updatedAt).not.toBeNull();
 
-    const [row] = await auditRows('customers.update', customer.id);
+    const updateRows = await auditRows('customers.update', customer.id);
+    expect(updateRows).toHaveLength(1); // exactly one row per write
+    const [row] = updateRows;
     expect(row!.before).toMatchObject({ status: 'lead', owner: null });
     expect(row!.after).toMatchObject({ status: 'active' });
 
@@ -171,6 +173,8 @@ describe('customers API', () => {
     ).json();
     expect(restored.deletedAt).toBeNull();
 
+    expect(await auditRows('customers.delete', c.id)).toHaveLength(1);
+    expect(await auditRows('customers.restore', c.id)).toHaveLength(1);
     const history = await (
       await app.request(`/api/customers/${c.id}/history?pageSize=10`, h)
     ).json();

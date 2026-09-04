@@ -38,6 +38,22 @@ services:
     volumes:
       - app-files:/app/data/files
 
+  # Split deployment shape: web and worker as two services from the same image.
+  #   docker compose --profile split up -d web worker   (instead of `app`)
+  web:
+    extends: app
+    profiles: ['split']
+    environment:
+      APP_MODE: web
+  worker:
+    extends: app
+    profiles: ['split']
+    ports: !reset []
+    environment:
+      APP_MODE: worker
+      MIGRATE_ON_START: 'false'
+      HEALTH_PORT: '3001'
+
   # Optional S3-compatible store for checking the s3 storage driver locally:
   #   docker compose --profile s3 up -d minio
   # Console at http://localhost:9001 (minioadmin / minioadmin). Create bucket "app".
