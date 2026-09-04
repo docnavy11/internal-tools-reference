@@ -21,7 +21,7 @@ export function normalizeEmail(email: string): string {
 }
 
 export function isAllowedDomain(email: string): boolean {
-  const domain = email.split('@')[1];
+  const domain = email.slice(email.lastIndexOf('@') + 1);
   return !!domain && env.AUTH_ALLOWED_DOMAINS.includes(domain);
 }
 

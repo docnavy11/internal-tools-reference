@@ -126,7 +126,7 @@ describe('configuration documentation', () => {
     const undocumented = envKeys.filter((k) => !documented.has(k));
     const documentedButUnread = [...documented].filter((k) => !envKeys.includes(k));
     const missingFromExample = envKeys.filter(
-      (k) => !exampled.has(k) && !['NODE_ENV', 'APP_VERSION', 'DATABASE_URL_TEST'].includes(k),
+      (k) => !exampled.has(k) && !['NODE_ENV', 'APP_VERSION'].includes(k),
     );
     expect(undocumented, 'read by env.ts but not in docs/CONFIG.md').toEqual([]);
     expect(documentedButUnread, 'in docs/CONFIG.md but env.ts does not read them').toEqual([]);

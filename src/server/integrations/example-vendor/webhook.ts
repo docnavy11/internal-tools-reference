@@ -18,7 +18,7 @@ export function exampleVendorWebhook(): WebhookDefinition {
     verify: hmacSha256Header({
       header: 'x-example-signature',
       prefix: 'sha256=',
-      secret: env.EXAMPLE_VENDOR_WEBHOOK_SECRET ?? '',
+      secret: env.EXAMPLE_VENDOR_WEBHOOK_SECRET!, // env refine guarantees it when the key is set
       timestampHeader: 'x-example-timestamp',
       toleranceSeconds: 300,
     }),

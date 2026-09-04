@@ -1,7 +1,9 @@
-import { and, eq, inArray, lt } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, lt } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../../env';
 import { auditLog } from '../audit/table';
+import { magicLinkTokens, oidcStates, sessions } from '../auth/table';
+import { or } from 'drizzle-orm';
 import { getDb } from '../db/client';
 import { defineJob, defineSchedule } from './define';
 import { jobs } from './table';
@@ -18,6 +20,31 @@ export const cleanupJobs = defineJob('jobs.cleanup', z.object({}), async (_paylo
   return { deleted: deleted.length };
 });
 defineSchedule('jobs.cleanup.daily', '15 3 * * *', cleanupJobs, {});
+
+// Expired sessions, consumed or expired magic links, abandoned OIDC states.
+export const cleanupAuth = defineJob('auth.cleanup', z.object({}), async (_payload, ctx) => {
+  const db = getDb();
+  const now = new Date();
+  const s = await db
+    .delete(sessions)
+    .where(lt(sessions.expiresAt, now))
+    .returning({ id: sessions.id });
+  const m = await db
+    .delete(magicLinkTokens)
+    .where(or(lt(magicLinkTokens.expiresAt, now), isNotNullUsed())!)
+    .returning({ id: magicLinkTokens.id });
+  const o = await db
+    .delete(oidcStates)
+    .where(lt(oidcStates.expiresAt, now))
+    .returning({ state: oidcStates.state });
+  const result = { sessions: s.length, magicLinks: m.length, oidcStates: o.length };
+  ctx.log.info(result, 'cleaned up auth tables');
+  return result;
+});
+defineSchedule('auth.cleanup.hourly', '20 * * * *', cleanupAuth, {});
+function isNotNullUsed() {
+  return isNotNull(magicLinkTokens.usedAt);
+}
 
 // Audit retention is opt-in: without AUDIT_RETENTION_DAYS the log is kept forever.
 export const pruneAudit = defineJob('audit.prune', z.object({}), async (_payload, ctx) => {

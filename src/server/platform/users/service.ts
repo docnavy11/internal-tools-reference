@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, ne, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, ilike, or, type SQL } from 'drizzle-orm';
 import type { ListParams, Page } from '../../../shared/api-types';
 import type {
   InviteUserInput,
@@ -29,7 +29,7 @@ export async function listUsers(params: ListParams & UserFilters): Promise<Page<
   const db = getDb();
   const conditions: SQL[] = [];
   if (params.q) {
-    const term = `%${params.q.replace(/[%_]/g, '\\$&')}%`;
+    const term = `%${params.q.replace(/[%_\\]/g, '\\$&')}%`;
     conditions.push(or(ilike(users.email, term), ilike(users.name, term))!);
   }
   if (params.role) conditions.push(eq(users.role, params.role));
@@ -104,13 +104,15 @@ export async function updateUser(actor: Actor, id: string, input: UpdateUserInpu
       current.status === 'active' &&
       (nextRole !== 'admin' || nextStatus !== 'active');
     if (losesAdmin) {
-      const [{ total }] = (await tx
-        .select({ total: count() })
+      // Lock every active admin row first so two concurrent demotions cannot both see
+      // "one other admin remains" and leave the tool with none.
+      const admins = await tx
+        .select({ id: users.id })
         .from(users)
-        .where(and(eq(users.role, 'admin'), eq(users.status, 'active'), ne(users.id, id)))) as [
-        { total: number },
-      ];
-      if (Number(total) === 0)
+        .where(and(eq(users.role, 'admin'), eq(users.status, 'active')))
+        .for('update');
+      const others = admins.filter((a) => a.id !== id).length;
+      if (others === 0)
         throw new AppError('last_admin', 400, 'There must be at least one active admin');
     }
 

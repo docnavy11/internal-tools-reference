@@ -17,6 +17,7 @@ env:
   SESSION_SECRET: ci-only-secret-ci-only-secret-ci-only-secret-40chars
   DATABASE_URL: postgres://app:app@localhost:5432/app
   DATABASE_URL_TEST: postgres://app:app@localhost:5432/app_test
+  DATABASE_URL_E2E: postgres://app:app@localhost:5432/app_e2e
   AUTH_DEV_LOGIN: 'true'
 
 jobs:
@@ -132,8 +133,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Create test database
-        run: PGPASSWORD=app psql -h localhost -U app -d app -c 'CREATE DATABASE app_test'
+      - name: Create e2e database
+        run: PGPASSWORD=app psql -h localhost -U app -d app -c 'CREATE DATABASE app_e2e'
 
       - name: Run e2e tests
         run: npm run test:e2e
@@ -179,8 +180,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Create test database
-        run: PGPASSWORD=app psql -h localhost -U app -d app -c 'CREATE DATABASE app_test'
+      - name: Create e2e database
+        run: PGPASSWORD=app psql -h localhost -U app -d app -c 'CREATE DATABASE app_e2e'
 
       - name: Build image
         run: docker build -t app:e2e --build-arg APP_VERSION=${{ github.sha }} .
@@ -193,7 +194,7 @@ jobs:
             -e NODE_ENV=test -e APP_MODE=all -e PORT=3100 -e APP_URL=http://localhost:3100 \
             -e MIGRATE_ON_START=true -e AUTH_DEV_LOGIN=true -e LOG_LEVEL=warn \
             -e SESSION_SECRET=ci-only-secret-ci-only-secret-ci-only-secret-40chars \
-            -e DATABASE_URL=postgres://app:app@localhost:5432/app_test \
+            -e DATABASE_URL=postgres://app:app@localhost:5432/app_e2e \
             -e EXAMPLE_VENDOR_API_KEY=e2e-key -e EXAMPLE_VENDOR_WEBHOOK_SECRET=e2e-webhook-secret \
             app:e2e
           for i in $(seq 1 30); do curl -sf http://localhost:3100/readyz && break; sleep 1; done

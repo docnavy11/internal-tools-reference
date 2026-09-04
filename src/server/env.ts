@@ -28,6 +28,8 @@ export const envSchema = z
 
     DATABASE_URL: z.string().min(1),
     DATABASE_URL_TEST: optionalString(),
+    // Read by playwright.config.ts only: the Playwright suite's own database.
+    DATABASE_URL_E2E: optionalString(),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
     MIGRATE_ON_START: bool,
 
@@ -124,6 +126,10 @@ export const envSchema = z
   .refine((e) => e.EMAIL_DRIVER !== 'smtp' || (e.SMTP_URL && e.EMAIL_FROM), {
     message: 'SMTP_URL and EMAIL_FROM are required when EMAIL_DRIVER=smtp',
     path: ['EMAIL_DRIVER'],
+  })
+  .refine((e) => e.NODE_ENV !== 'production' || !e.AUTH_MAGIC_LINK || e.EMAIL_DRIVER === 'smtp', {
+    message: 'magic links in production need a real email driver (EMAIL_DRIVER=smtp)',
+    path: ['AUTH_MAGIC_LINK'],
   })
   .refine((e) => e.SLACK_DRIVER !== 'bot' || (e.SLACK_BOT_TOKEN && e.SLACK_DEFAULT_CHANNEL), {
     message: 'SLACK_BOT_TOKEN and SLACK_DEFAULT_CHANNEL are required when SLACK_DRIVER=bot',

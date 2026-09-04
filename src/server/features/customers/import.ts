@@ -117,6 +117,8 @@ export function parseCustomerCsv(text: string): ParsedImport {
     header: true,
     skipEmptyLines: 'greedy',
     transformHeader: (h) => h.trim().toLowerCase(),
+    // Stop parsing one row past the cap instead of materialising a whole oversized file.
+    preview: IMPORT_MAX_ROWS + 1,
   });
   const fields = parsed.meta.fields ?? [];
   if (!fields.includes('name')) {

@@ -53,6 +53,9 @@ export default defineConfig({
         env: {
           ...process.env,
           NODE_ENV: 'test',
+          // The server maps DATABASE_URL to DATABASE_URL_TEST under NODE_ENV=test; point that
+          // at the e2e database so Vitest and Playwright never share tables.
+          DATABASE_URL_TEST: process.env.DATABASE_URL_E2E ?? process.env.DATABASE_URL_TEST ?? '',
           APP_MODE: 'all',
           PORT: String(PORT),
           MIGRATE_ON_START: 'true',

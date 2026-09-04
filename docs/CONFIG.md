@@ -28,6 +28,7 @@ stray exported variable (a `PORT` exported in your profile is the classic case).
 |---|---|---|---|
 | `DATABASE_URL` | yes | | Postgres connection string |
 | `DATABASE_URL_TEST` | tests | | separate database for Vitest |
+| `DATABASE_URL_E2E` | e2e | | separate database for Playwright, so both suites can run at once |
 | `DATABASE_POOL_MAX` | no | `10` | pool size |
 | `MIGRATE_ON_START` | no | `false` | run migrations at boot in web or all mode |
 

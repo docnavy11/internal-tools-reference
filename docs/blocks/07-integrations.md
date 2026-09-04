@@ -86,6 +86,9 @@ HMAC verification. Exists so the recipe points at real code.
 - `integrations/example-vendor/`: `client.ts` (widgets), `webhook.ts` (HMAC over
   `${timestamp}.${body}`, `widget.failing` simulates a failure), `index.ts` registers only
   when `EXAMPLE_VENDOR_API_KEY` is set. `integrations/index.ts` is the registry.
+- `hmacSha256Header` and `sharedTokenHeader` throw at construction when the secret is
+  empty, so a copied integration that forgot its env refine fails at boot, not by
+  accepting forged requests.
 - Not built: a webhook-specific admin for outbound calls; those are visible through jobs.
 
 ## As built (phase 6, client)

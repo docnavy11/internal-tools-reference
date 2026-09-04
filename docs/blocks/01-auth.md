@@ -113,6 +113,12 @@ Dev login
 - Client IP for rate limits, sessions and audit metadata comes from the socket unless
   `TRUST_PROXY_HOPS` says how many `x-forwarded-for` hops to trust; the leftmost value is
   never used.
+- Magic link emails go through a dedicated `auth.magic_link_email` job marked `sensitive`,
+  so the jobs admin API shows `[redacted]` instead of the live link; the console email
+  driver prints bodies only under `NODE_ENV=development`, and production refuses
+  `AUTH_MAGIC_LINK=true` without `EMAIL_DRIVER=smtp`. An hourly `auth.cleanup` job removes
+  expired sessions, spent or expired links and abandoned OIDC states; the OIDC start route
+  is rate limited.
 - Redirect targets refuse whitespace and control characters (browsers strip tabs and
   newlines, which would turn `/<tab>/evil` into `//evil`).
 - Not verified against a real Google or Microsoft tenant yet. Tests use a fake

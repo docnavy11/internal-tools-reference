@@ -16,6 +16,10 @@ export interface HmacOptions {
 }
 
 export function hmacSha256Header(opts: HmacOptions): Verifier {
+  // An empty secret would let anyone forge a valid signature. Fail at construction, which
+  // happens at boot when the integration registers, not on the first delivery.
+  if (!opts.secret)
+    throw new Error(`webhook verifier for header ${opts.header} has no secret configured`);
   return (rawBody, headers) => {
     const provided = headers.get(opts.header);
     if (!provided) return false;
@@ -40,6 +44,7 @@ export function hmacSha256Header(opts: HmacOptions): Verifier {
 
 // For vendors that only offer a shared token in a header.
 export function sharedTokenHeader(header: string, token: string): Verifier {
+  if (!token) throw new Error(`webhook verifier for header ${header} has no token configured`);
   return (_body, headers) => {
     const given = headers.get(header) ?? '';
     const a = Buffer.from(token);

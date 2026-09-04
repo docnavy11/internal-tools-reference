@@ -22,6 +22,9 @@ export interface JobContext {
 export interface JobOptions {
   maxAttempts?: number; // default 5
   timeoutMs?: number; // default 60s
+  // The payload holds a secret (a sign-in token, a credential). The admin API and the
+  // detail sheet show "[redacted]" instead of it.
+  sensitive?: boolean;
 }
 
 // Schemas may use preprocess/default, so the input type is unknown; T is the output.
@@ -33,6 +36,7 @@ export interface JobDefinition<T = unknown> {
   handler: (payload: T, ctx: JobContext) => Promise<unknown>;
   maxAttempts: number;
   timeoutMs: number;
+  sensitive: boolean;
 }
 
 // Thrown by a handler to mark the job dead immediately instead of retrying.
@@ -62,6 +66,7 @@ export function defineJob<T>(
     handler,
     maxAttempts: options.maxAttempts ?? 5,
     timeoutMs: options.timeoutMs ?? 60_000,
+    sensitive: options.sensitive ?? false,
   };
   jobRegistry.set(name, definition as JobDefinition<unknown>);
   return definition;

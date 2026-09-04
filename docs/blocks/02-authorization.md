@@ -51,7 +51,8 @@ and re-enable. Revoke sessions. Every action audited.
 - `requireAuth()`, `requirePermission()` and `publicRoute()` live in
   `platform/auth/middleware.ts` and tag their handlers; `tests/server/authz-coverage.test.ts`
   walks `app.routes` and fails on any `/api` endpoint without a tag.
-- Users admin API in `platform/users/`: service guards `self_change` (an admin cannot
+- Users admin API in `platform/users/`: the last-admin check locks all active admin rows
+  (`FOR UPDATE`) so two concurrent demotions cannot both pass; service guards `self_change` (an admin cannot
   change their own role or status) and `last_admin` (the last active admin cannot be
   demoted or disabled; reachable only with a non-user actor today, kept as defence in
   depth). Disabling revokes sessions. Every action audited.

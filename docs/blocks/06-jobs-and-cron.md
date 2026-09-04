@@ -90,6 +90,8 @@ description, last and next run, enable toggle, "run now".
 - The scheduler runs under `pg_advisory_xact_lock` and dedupes on
   `schedule:<name>:<plannedRunAt>`; disabled schedules never fire; removed definitions
   are deleted from the table at sync.
+- `defineJob(..., { sensitive: true })` redacts the payload in the admin API for jobs that
+  carry secrets (the magic link email job).
 - Retry resets `attempts` to 0 and is allowed from failed, dead or cancelled; cancel is
   allowed from pending. Both audited.
 - Test hooks: the exported functions run without timers; the three-worker exclusivity

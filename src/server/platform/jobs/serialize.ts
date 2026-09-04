@@ -1,5 +1,5 @@
 import type { Job, Schedule } from '../../../shared/jobs';
-import { describeCron } from './define';
+import { describeCron, getJobDefinition } from './define';
 import type { jobs, schedules } from './table';
 
 export function serializeJob(row: typeof jobs.$inferSelect): Job {
@@ -7,7 +7,7 @@ export function serializeJob(row: typeof jobs.$inferSelect): Job {
     id: row.id,
     name: row.name,
     status: row.status as Job['status'],
-    payload: row.payload,
+    payload: getJobDefinition(row.name)?.sensitive ? '[redacted]' : row.payload,
     result: row.result ?? null,
     attempts: row.attempts,
     maxAttempts: row.maxAttempts,

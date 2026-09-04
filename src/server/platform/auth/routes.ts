@@ -59,22 +59,27 @@ export function authRoutes(): Hono<AppEnv> {
   type SignInOutcome =
     { redirectTo: string; error: LoginErrorCode } | { redirectTo: string; token: string };
 
-  r.get('/auth/oidc/:provider/start', publicRoute(), async (c) => {
-    const provider = getProvider(c.req.param('provider'));
-    const redirectTo = safeRedirect(c.req.query('redirect_to'));
-    if (!provider) return loginError(c, 'unknown_provider', redirectTo);
-    const url = await withTransaction((tx) => beginAuthorization(tx, provider, redirectTo));
-    // Bind the flow to this browser: the callback must present the same state in a
-    // cookie, so a callback URL captured by an attacker cannot log someone else in.
-    setCookie(c, OIDC_STATE_COOKIE, new URL(url).searchParams.get('state')!, {
-      httpOnly: true,
-      secure: env.APP_URL.startsWith('https://'),
-      sameSite: 'Lax',
-      path: '/api/auth/oidc',
-      maxAge: 10 * 60,
-    });
-    return c.redirect(url);
-  });
+  r.get(
+    '/auth/oidc/:provider/start',
+    publicRoute(),
+    rateLimit({ limit: 30, windowMs: 60_000 }),
+    async (c) => {
+      const provider = getProvider(c.req.param('provider'));
+      const redirectTo = safeRedirect(c.req.query('redirect_to'));
+      if (!provider) return loginError(c, 'unknown_provider', redirectTo);
+      const url = await withTransaction((tx) => beginAuthorization(tx, provider, redirectTo));
+      // Bind the flow to this browser: the callback must present the same state in a
+      // cookie, so a callback URL captured by an attacker cannot log someone else in.
+      setCookie(c, OIDC_STATE_COOKIE, new URL(url).searchParams.get('state')!, {
+        httpOnly: true,
+        secure: env.APP_URL.startsWith('https://'),
+        sameSite: 'Lax',
+        path: '/api/auth/oidc',
+        maxAge: 10 * 60,
+      });
+      return c.redirect(url);
+    },
+  );
 
   r.get('/auth/oidc/:provider/callback', publicRoute(), async (c) => {
     const provider = getProvider(c.req.param('provider'));

@@ -3,12 +3,31 @@ import { and, count, eq, gt, isNull } from 'drizzle-orm';
 import { env } from '../../env';
 import type { Tx } from '../db/client';
 import { totalOf } from '../db/count';
-import { notify } from '../notify';
+import { z } from 'zod';
+import { defineJob } from '../jobs/define';
+import { enqueue } from '../jobs/enqueue';
+import { deliverEmail } from '../notify/email';
 import { hashToken } from './sessions';
 import { isAllowedDomain, normalizeEmail } from './policy';
 import { magicLinkTokens, users } from './table';
 
 const LINK_TTL_MS = 15 * 60 * 1000;
+
+// Dedicated job rather than notify.email: the payload carries the live sign-in link, so it
+// is marked sensitive and the admin API never shows it.
+export const sendMagicLinkEmail = defineJob(
+  'auth.magic_link_email',
+  z.object({ to: z.string().email(), link: z.string().url() }),
+  async ({ to, link }) => {
+    await deliverEmail({
+      to,
+      subject: `Sign in to ${env.APP_NAME}`,
+      text: `Use this link to sign in to ${env.APP_NAME}. It is valid for 15 minutes and can be used once.\n\n${link}\n\nIf you did not request this, you can ignore this email.`,
+    });
+    return { to };
+  },
+  { maxAttempts: 5, timeoutMs: 30_000, sensitive: true },
+);
 
 // Sends a link only when the email could actually sign in, so the mailbox of a random
 // address never receives anything. The caller responds identically either way.
@@ -39,14 +58,7 @@ export async function requestMagicLink(
   });
   const link = new URL('/api/auth/magic/verify', env.APP_URL);
   link.searchParams.set('token', token);
-  await notify.email(
-    {
-      to: email,
-      subject: `Sign in to ${env.APP_NAME}`,
-      text: `Use this link to sign in to ${env.APP_NAME}. It is valid for 15 minutes and can be used once.\n\n${link.toString()}\n\nIf you did not request this, you can ignore this email.`,
-    },
-    { tx },
-  );
+  await enqueue(sendMagicLinkEmail, { to: email, link: link.toString() }, { tx });
   return true;
 }
 
