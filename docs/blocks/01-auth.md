@@ -87,6 +87,23 @@ Dev login
   `isLoading`. Routes are wrapped in `RequireAuth` which redirects to `/login`.
 - 401 from any API call clears the session state and redirects to `/login`.
 
+## As built (phase 2)
+
+- Files: `platform/auth/{table,sessions,oidc,magic-link,policy,middleware,routes}.ts`.
+- Dev login differs from the spec in one way: it creates a missing user regardless of
+  the domain allowlist (first user still becomes admin, later ones get
+  `AUTH_DEFAULT_ROLE`), because its purpose is trying the app as different roles.
+- Magic link `redirect_to` travels in the query string of the request call, not the
+  body, and is embedded in the emailed link. Per-IP limit through middleware, per-email
+  limit inside the handler. Email goes through `platform/notify/email.ts` synchronously
+  with the console driver until phase 5 moves it into a job.
+- CSRF: Origin must match `APP_URL` when present; requests without Origin are checked
+  against `Sec-Fetch-Site`; requests with neither header (curl, tests) pass.
+- Microsoft issuer: the discovery document for `organizations`/`common` carries a
+  literal `{tenantid}`; the client substitutes the token's `tid` before comparing.
+- Not verified against a real Google or Microsoft tenant yet. Tests use a fake
+  provider with locally signed RS256 tokens (`tests/server/oidc.test.ts`).
+
 ## Done when
 
 - Sign in with Google works locally against a real Google OAuth client.

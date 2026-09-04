@@ -4,10 +4,11 @@ Conventions for anyone changing this repository, human or agent.
 
 ## Status
 
-Phase 1 (skeleton) is implemented: build, env validation, database and migrations,
-HTTP platform, health endpoints, APP_MODE switch, placeholder page, tests, Docker,
-CI. Phases 2 to 7 in `docs/BUILD_PLAN.md` are not started. Update this section as
-phases land.
+Phases 1 and 2 are implemented: build, env validation, database and migrations, HTTP
+platform, health, APP_MODE switch, Docker, CI; auth (OIDC, magic link, dev login,
+sessions), permissions with the route coverage test, audit log table, users admin
+API and page, UI shell, login page. Phases 3 to 7 in `docs/BUILD_PLAN.md` are not
+started. Update this section as phases land.
 
 ## Read first
 
@@ -25,7 +26,10 @@ phases land.
   feature code in `platform/`.
 - Every write goes through a service, inside `withTransaction`, and calls
   `audit.record()` in that transaction. No writes from routes or jobs directly.
-- Every route under `/api` has `requirePermission()` or the `publicRoute` marker.
+- Every route under `/api` has `requireAuth()`, `requirePermission()` or `publicRoute()`;
+  `tests/server/authz-coverage.test.ts` enforces it.
+- Request bodies, params and queries are validated with `validate()` from
+  `platform/http/validate.ts`, never with `zValidator` directly, so errors use the envelope.
 - Zod schemas in `src/shared` are the source of truth for shapes. Drizzle tables
   mirror them by hand. Do not add schema generation.
 - Network calls that change external state run in jobs, not in request handlers.

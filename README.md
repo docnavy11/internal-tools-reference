@@ -6,7 +6,7 @@ login, roles and permissions, tables and forms with validation, audit history,
 background jobs and schedules, file uploads, email and Slack, settings and feature
 flags, structured logging, and a UI shell.
 
-Status: phase 1 of 7 (skeleton) implemented. See `docs/BUILD_PLAN.md`.
+Status: phases 1 and 2 of 7 implemented (skeleton; auth, permissions, shell, users admin). See `docs/BUILD_PLAN.md`.
 
 Stack in one line: TypeScript, React with Vite, Hono, Postgres with Drizzle,
 shadcn/ui on Tailwind 4, one Docker image that runs anywhere.
@@ -24,7 +24,7 @@ npm run db:seed                    # creates admin@local.test for dev login
 npm run dev                        # API on :3000, client on :5174
 ```
 
-Open http://localhost:5174.
+Open http://localhost:5174 and use the development login with `admin@local.test`.
 
 ## Everyday commands
 

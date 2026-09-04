@@ -46,6 +46,19 @@ its own folders.
 List users with role and status. Invite by email with a role. Change role. Disable
 and re-enable. Revoke sessions. Every action audited.
 
+## As built (phase 2)
+
+- `requireAuth()`, `requirePermission()` and `publicRoute()` live in
+  `platform/auth/middleware.ts` and tag their handlers; `tests/server/authz-coverage.test.ts`
+  walks `app.routes` and fails on any `/api` endpoint without a tag.
+- Users admin API in `platform/users/`: service guards `self_change` (an admin cannot
+  change their own role or status) and `last_admin` (the last active admin cannot be
+  demoted or disabled; reachable only with a non-user actor today, kept as defence in
+  depth). Disabling revokes sessions. Every action audited.
+- Client: `RequireAuth`, `RequirePermission`, `usePermission` in `client/platform/auth/`;
+  the navigation registry hides entries by permission. Users page at `/settings/users`
+  uses plain shadcn table primitives until the phase 3 DataTable exists.
+
 ## Done when
 
 - Route coverage test passes.

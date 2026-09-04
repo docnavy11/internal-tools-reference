@@ -23,9 +23,13 @@ Build tooling, database, container, CI, health.
 
 Accept when: `docker compose up` serves the page; CI is green; `npm run check` passes.
 
-## Phase 2: auth, authorization, shell (medium)
+## Phase 2: auth, authorization, shell (medium) — implemented 2026-09-04
 
-Blocks 01, 02, 12.
+Blocks 01, 02, 12. As built: server side by the lead (43 Vitest tests), client shell,
+login and users page by an agent against the shared contract in `src/shared/auth.ts`
+and `src/shared/features/users/schema.ts`, 8 Playwright tests. Google and Microsoft
+flows are verified against a fake OIDC provider with locally signed tokens, not yet
+against real tenants; do that once a real client id exists and record it in block 01.
 
 - Sessions, OIDC client, Google and Microsoft config, magic link, dev login, logout,
   `/api/me`.

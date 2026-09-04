@@ -49,6 +49,18 @@ search over its records (`GET /api/<plural>?q=&pageSize=5`). Keyboard shortcut
 - Tables and long content scroll within their container; the page never scrolls
   horizontally.
 
+## As built (phase 2)
+
+- `client/platform/shell/`: `app-shell.tsx` (layout route with sidebar and top bar),
+  `app-sidebar.tsx`, `breadcrumbs.tsx` (from `handle.title` on routes), `user-menu.tsx`,
+  `theme.tsx` (`dark` class on `html`, localStorage, system default), `nav.ts`
+  (registry), `page-header.tsx`, `empty-state.tsx`, `states.tsx`, `error-boundary.tsx`,
+  `confirm-dialog.tsx`, `relative-time.tsx`, `user-avatar.tsx`.
+- Two shadcn files were rewritten and will be reverted by `shadcn add --overwrite`:
+  `ui/sonner.tsx` reads the shell's theme context instead of `next-themes`, and
+  `hooks/use-mobile.ts` uses `useSyncExternalStore` to satisfy the react-hooks lint rule.
+- Command palette not built (optional, phase 7).
+
 ## Done when
 
 - Golden example pages use only shell and kit components; no bespoke layout.

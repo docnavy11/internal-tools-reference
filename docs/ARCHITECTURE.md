@@ -4,8 +4,8 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phase 1 (skeleton) implemented.** See `BUILD_PLAN.md` for what each phase
-adds. Where this document and the code disagree, the code was checked more recently;
+Status: **phases 1 and 2 implemented** (skeleton; auth, authorization, shell, users
+admin). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
@@ -110,16 +110,20 @@ src/
     env.ts                     Zod-validated process.env, the only place it is read
     scripts/                   CLI entry points only: migrate, seed, reset (see note below)
     platform/
-      db/                      drizzle client, migration runner, transaction helper
-      auth/                    oidc.ts, sessions.ts, magic-link.ts, routes.ts, middleware.ts
-      authz/                   requirePermission middleware
-      audit/                   record(), table, routes
+      db/                      drizzle client, migration runner, transaction helper, columns
+      auth/                    table.ts (users, sessions, tokens), oidc.ts, sessions.ts,
+                               magic-link.ts, policy.ts (who may sign in), routes.ts,
+                               middleware.ts (sessionContext, csrf, requireAuth,
+                               requirePermission, publicRoute)
+      users/                   users admin: service.ts, routes.ts, serialize.ts
+      audit/                   table, record(); routes arrive in phase 3
       jobs/                    defineJob, enqueue, worker loop, schedules, routes
       storage/                 adapter, drivers
       notify/                  email and slack adapters, drivers, notify jobs
       settings/                defineSetting, cache, routes
       webhooks/                inbox table, verify helpers
-      http/                    request id, logging, error handler, csrf, pagination helpers
+      http/                    request id, logging, error handler, validate (zod envelope),
+                               list (paging/sorting), rate-limit, redirect
       csv/                     export streaming, import parsing
     features/<name>/
       table.ts                 Drizzle table definition
@@ -129,17 +133,23 @@ src/
       index.ts                 registers routes, jobs, nav entry
     integrations/<vendor>/     outbound client and inbound webhook handler
   client/
-    main.tsx, router.tsx
+    main.tsx, router.tsx       router.tsx imports each feature's routes (one line each)
     platform/
-      shell/                   layout, sidebar, top bar, command palette, theme
-      data-table/              DataTable, filter bar, pagination, bulk actions, export
-      form/                    field components bound to react-hook-form
-      api/                     fetch client, query helpers, error mapping
-      auth/                    session context, usePermission, login page
-      ui/                      shadcn components, copied in
+      shell/                   app-shell, sidebar, breadcrumbs, user menu, theme,
+                               nav.ts (navigation registry), page-header, empty-state,
+                               states (loading/not-found/no-access), error-boundary,
+                               confirm-dialog, relative-time, user-avatar
+      data-table/              phase 3: DataTable, filter bar, pagination, bulk, export
+      form/                    phase 3: field components bound to react-hook-form
+      api/                     fetch client with error envelope mapping and 401 hook
+      auth/                    session provider, usePermission, RequireAuth,
+                               RequirePermission, login page, redirect validation
+      ui/                      shadcn components, copied in by the shadcn CLI
+    hooks/                     small shared hooks (use-mobile)
+    lib/                       utils (cn)
     features/<name>/
       list.tsx, detail.tsx, form.tsx, nav.ts
-    pages/                     users, audit, jobs, settings, files admin pages
+    pages/                     home, settings/ (layout, users), later audit, jobs, files
 drizzle/                       generated SQL migrations, never edited after apply
 tests/
   server/                      Vitest, real Postgres
