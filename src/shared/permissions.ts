@@ -10,6 +10,9 @@ export const permissions = [
   'jobs:manage',
   'settings:manage',
   'files:manage',
+  'customers:read',
+  'customers:write',
+  'customers:delete',
 ] as const;
 export type Permission = (typeof permissions)[number];
 
