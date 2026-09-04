@@ -1,4 +1,6 @@
-import { parseExpression } from 'cron-parser';
+// cron-parser is CommonJS: Node's ESM loader only offers the default export, so a named
+// import works under tsx and Vitest but fails in the esbuild bundle. Destructure instead.
+import cronParser from 'cron-parser';
 import type { z } from 'zod';
 import type { Actor } from '../audit/record';
 import type { Logger } from '../http/logger';
@@ -6,6 +8,8 @@ import type { Logger } from '../http/logger';
 // Job handlers and schedules are declared in code with these two functions. Definitions
 // are collected at import time; src/server/features/index.ts imports every feature's
 // jobs.ts so both web and worker processes know the full registry.
+
+const { parseExpression } = cronParser;
 
 export interface JobContext {
   jobId: string;
