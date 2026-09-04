@@ -17,6 +17,7 @@ env:
   SESSION_SECRET: ci-only-secret-ci-only-secret-ci-only-secret-40chars
   DATABASE_URL: postgres://app:app@localhost:5432/app
   DATABASE_URL_TEST: postgres://app:app@localhost:5432/app_test
+  AUTH_DEV_LOGIN: 'true'
 
 jobs:
   check:

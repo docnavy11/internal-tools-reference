@@ -1,10 +1,13 @@
 import { existsSync } from 'node:fs';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
+import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
+import { authRoutes } from './platform/auth/routes';
 import { pingDatabase } from './platform/db/client';
 import { logger } from './platform/http/logger';
 import { accessLog, apiNotFound, handleError, requestContext } from './platform/http/middleware';
 import type { AppEnv } from './platform/http/types';
+import { userRoutes } from './platform/users/routes';
 import { registerFeatures } from './features';
 
 export function createApp(): Hono<AppEnv> {
@@ -21,6 +24,10 @@ export function createApp(): Hono<AppEnv> {
   });
 
   const api = new Hono<AppEnv>();
+  api.use(sessionContext);
+  api.use(csrfOriginCheck);
+  api.route('/', authRoutes());
+  api.route('/', userRoutes());
   registerFeatures(api);
   api.all('*', apiNotFound);
   app.route('/api', api);
