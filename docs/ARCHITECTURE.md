@@ -118,7 +118,8 @@ src/
                                requirePermission, publicRoute)
       users/                   users admin: service.ts, routes.ts, serialize.ts
       audit/                   table, record(); routes arrive in phase 3
-      jobs/                    defineJob, enqueue, worker loop, schedules, routes
+      jobs/                    define (jobs + schedules), enqueue, worker (claim, run,
+                               reap, scheduler), service, routes, builtin housekeeping
       storage/                 adapter, drivers
       notify/                  email and slack adapters, drivers, notify jobs
       settings/                defineSetting, cache, routes
@@ -132,7 +133,8 @@ src/
       serialize.ts             row (+ joined user) to the shared API shape
       service.ts               all reads and writes for the entity, audit calls inside
       routes.ts                Hono routes: authorize, validate, call service
-      jobs.ts                  optional background jobs for this feature (phase 4)
+      jobs.ts                  background jobs and schedules for this feature
+      import.ts                CSV import routes and job (customers example)
       index.ts                 registers routes and jobs with the api
     integrations/<vendor>/     outbound client and inbound webhook handler
   client/

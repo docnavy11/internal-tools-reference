@@ -1,6 +1,6 @@
 # Recipe: add a background job or schedule
 
-Target procedure, to be verified in phase 4 against `customers/jobs.ts`.
+Corrected against `src/server/features/customers/jobs.ts` and `import.ts` in phase 4.
 
 1. In `src/server/features/<name>/jobs.ts`:
 
@@ -10,22 +10,30 @@ export const syncVendors = defineJob(
   z.object({ since: z.string().datetime().optional() }),
   async (payload, ctx) => {
     ctx.log.info('starting');
-    // work, using withTransaction and audit.record(tx, ctx.actor, ...) for writes
+    // Writes go through withTransaction and recordAudit(tx, ctx.actor, ...).
     return { synced: 12 }; // stored as result, visible in the admin page
   },
   { maxAttempts: 3, timeoutMs: 5 * 60_000 },
 );
 ```
 
-2. Register it in the feature's `index.ts` via `registerJobs([syncVendors])`. Jobs
-   must be registered in both `web` and `worker` modes because `enqueue` validates
-   the payload against the definition.
+   `ctx` carries `jobId`, `attempt`, a child `log`, a job `actor` for audit rows, and an
+   `AbortSignal` that fires at the timeout. The schema may use `preprocess` and
+   `default`; the payload is validated at enqueue and again when the job runs, so make
+   preprocessors idempotent (an array must pass through an array).
 
-3. Enqueue from a service, inside the transaction when the job depends on the write:
+2. Register by adding `import './<name>/jobs';` to the side-effect imports at the top of
+   `src/server/features/index.ts`. That file is imported by both the web and the worker
+   entry points, so both know the handler; `enqueue` validates against it.
+
+3. Enqueue from a service, passing the transaction when the job depends on the write:
 
 ```ts
 await enqueue(syncVendors, { since }, { tx, dedupeKey: 'vendors.sync' });
 ```
+
+   `enqueue` returns `{ id, deduped }`. With a `dedupeKey`, a second call while a job with
+   that key is pending or running is a no-op that returns the live job's id.
 
 4. For a schedule, in the same file:
 
@@ -33,9 +41,15 @@ await enqueue(syncVendors, { since }, { tx, dedupeKey: 'vendors.sync' });
 defineSchedule('vendors.nightly_sync', '0 3 * * *', syncVendors, {});
 ```
 
-5. Test the handler directly by calling `syncVendors.handler(payload, testCtx)`,
-   and test enqueue-side behaviour through the service test. Do not test the worker
-   loop again; it has its own tests.
+   The cron is validated at import time. The worker mirrors definitions into the
+   `schedules` table at start; admins can disable a schedule or run it now from
+   `/settings/jobs`.
 
-6. Throwing `NonRetryableError` marks the job `dead` immediately. Anything else
-   retries with backoff.
+5. Tests (`tests/server/<name>.test.ts` or `jobs.test.ts`): `await enqueue(...)`, then
+   `const job = await claimOne(); await runJob(job)`, then assert on the row in `jobs`
+   and on audit rows. Both functions take the test transaction through `getDb()`.
+   Do not start `startWorker()` in tests.
+
+6. Throwing `NonRetryableError` marks the job `dead` immediately. Anything else retries
+   with backoff until `maxAttempts`, then `dead`. Return a JSON-serialisable value to
+   have it stored as `result`.

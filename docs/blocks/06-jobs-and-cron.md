@@ -71,6 +71,34 @@ and error in an expandable row, actions retry (dead or failed back to pending),
 cancel (pending to cancelled). Schedules: list with cron, human-readable
 description, last and next run, enable toggle, "run now".
 
+## As built (phase 4)
+
+- `platform/jobs/`: `table.ts`, `define.ts` (`defineJob`, `defineSchedule`,
+  `NonRetryableError`, registries, `describeCron`), `enqueue.ts`, `worker.ts`
+  (`claimOne`, `runJob`, `reapStale`, `syncSchedules`, `tickScheduler`, `startWorker`),
+  `service.ts`, `routes.ts`, `builtin.ts` (`jobs.cleanup` daily, `audit.prune` daily when
+  `AUDIT_RETENTION_DAYS` is set), `serialize.ts`.
+- Registration: `src/server/features/index.ts` side-effect imports every feature's
+  `jobs.ts`, and `src/server/worker.ts` imports that plus `builtin.ts`, so web and worker
+  processes share one registry. Job schemas are `ZodType<T, ZodTypeDef, unknown>` so
+  `preprocess`/`default` schemas work; payloads are validated at enqueue and again at run.
+- Claiming uses `clock_timestamp()` rather than `now()`: `now()` is the transaction
+  start, so a job enqueued in the same transaction would never look due (this matters
+  in tests and in any code that enqueues and processes within one transaction).
+- Dedupe via a partial unique index on `dedupe_key where status in ('pending','running')`
+  and `ON CONFLICT ... DO NOTHING`; a duplicate enqueue returns the live job's id.
+- The scheduler runs under `pg_advisory_xact_lock` and dedupes on
+  `schedule:<name>:<plannedRunAt>`; disabled schedules never fire; removed definitions
+  are deleted from the table at sync.
+- Retry resets `attempts` to 0 and is allowed from failed, dead or cancelled; cancel is
+  allowed from pending. Both audited.
+- Test hooks: the exported functions run without timers; the three-worker exclusivity
+  test uses the real pool outside the per-test transaction and cleans up after itself.
+- CSV import (`features/customers/import.ts`): parse with papaparse, validate rows with
+  the shared schema, answer 202 with accepted/rejected, enqueue one `customers.import`
+  job (max 1 attempt) that inserts in batches of 200 and reports per-row failures.
+  Status endpoint is visible to the requester and admins only.
+
 ## Done when
 
 - Tests: claim is exclusive under two concurrent workers, retry with backoff, dead
