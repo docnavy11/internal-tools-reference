@@ -10,6 +10,17 @@ if (!existsSync(serverEntry)) {
   throw new Error(`dist/server/main.js not found. Run "npm run build" before "npm run test:e2e".`);
 }
 
+// The server maps DATABASE_URL to DATABASE_URL_TEST under NODE_ENV=test. Without the
+// test URL it would migrate and write the development database, so refuse.
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // CI provides the environment directly
+}
+if (!process.env.DATABASE_URL_TEST) {
+  throw new Error('DATABASE_URL_TEST must be set to run the e2e suite (see .env.example).');
+}
+
 const PORT = 3100;
 const baseURL = `http://localhost:${PORT}`;
 

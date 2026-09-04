@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
@@ -8,6 +9,7 @@ import { logger } from './platform/http/logger';
 import { accessLog, apiNotFound, handleError, requestContext } from './platform/http/middleware';
 import type { AppEnv } from './platform/http/types';
 import { userRoutes } from './platform/users/routes';
+import { clientDistDir } from './paths';
 import { registerFeatures } from './features';
 
 export function createApp(): Hono<AppEnv> {
@@ -16,6 +18,7 @@ export function createApp(): Hono<AppEnv> {
   app.use(requestContext);
   app.use(accessLog);
   app.onError(handleError);
+  app.notFound(apiNotFound);
 
   app.get('/healthz', (c) => c.json({ ok: true }));
   app.get('/readyz', async (c) => {
@@ -33,12 +36,14 @@ export function createApp(): Hono<AppEnv> {
   app.route('/api', api);
 
   // Built SPA. In development Vite serves the client and proxies to us instead.
-  const clientDir = './dist/client';
-  if (existsSync(clientDir)) {
-    app.use('/*', serveStatic({ root: clientDir }));
-    app.get('*', serveStatic({ path: `${clientDir}/index.html` }));
+  // Hashed assets that do not exist must 404, never fall back to index.html.
+  if (existsSync(clientDistDir)) {
+    const root = path.relative(process.cwd(), clientDistDir) || '.';
+    app.use('/*', serveStatic({ root }));
+    app.get('/assets/*', (c) => c.notFound());
+    app.get('*', serveStatic({ path: path.join(root, 'index.html') }));
   } else {
-    logger.warn({ clientDir }, 'no client build found; only the API is served');
+    logger.warn({ clientDistDir }, 'no client build found; only the API is served');
   }
 
   return app;

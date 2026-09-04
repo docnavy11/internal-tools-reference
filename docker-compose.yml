@@ -31,8 +31,7 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-compose-default-secret-change-me-in-production-please}
       DATABASE_URL: postgres://app:app@postgres:5432/app
       MIGRATE_ON_START: 'true'
-      STORAGE_DRIVER: disk
-      FILES_DIR: /app/data/files
+      # Phase 5 adds STORAGE_DRIVER=disk and FILES_DIR=/app/data/files here.
     ports:
       - '3000:3000'
     volumes:

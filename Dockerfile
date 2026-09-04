@@ -44,8 +44,9 @@ USER node
 
 EXPOSE 3000
 
-# busybox wget ships in alpine, so no extra package is needed for the healthcheck.
+# busybox wget ships in alpine, so no extra package is needed. Worker-only containers
+# serve health on HEALTH_PORT (default 3001), web and all on PORT (default 3000).
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget -q -O /dev/null http://localhost:3000/healthz || exit 1
+  CMD wget -q -O /dev/null "http://localhost:$([ "$APP_MODE" = "worker" ] && echo "${HEALTH_PORT:-3001}" || echo "${PORT:-3000}")/healthz" || exit 1
 
 CMD ["node", "dist/server/main.js"]

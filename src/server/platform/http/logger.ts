@@ -1,7 +1,19 @@
+import { createRequire } from 'node:module';
 import pino from 'pino';
 import { env } from '../../env';
 
 export type Logger = pino.Logger;
+
+// pino-pretty is a devDependency. The production image has no dev dependencies, so a
+// container started with NODE_ENV=development must still boot, just with JSON logs.
+function prettyAvailable(): boolean {
+  try {
+    createRequire(import.meta.url).resolve('pino-pretty');
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const logger: Logger = pino({
   level: env.LOG_LEVEL,
@@ -19,7 +31,7 @@ export const logger: Logger = pino({
     censor: '[redacted]',
   },
   transport:
-    env.NODE_ENV === 'development'
+    env.NODE_ENV === 'development' && prettyAvailable()
       ? {
           target: 'pino-pretty',
           options: {

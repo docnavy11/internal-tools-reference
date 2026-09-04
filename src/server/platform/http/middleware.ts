@@ -9,8 +9,11 @@ import type { AppEnv } from './types';
 
 // Reuse an inbound x-request-id (load balancers set one) or mint a UUID. Echo it in
 // the response so a user can quote it, and bind it to a child logger.
+const REQUEST_ID = /^[A-Za-z0-9._:-]{8,128}$/;
+
 export const requestContext: MiddlewareHandler<AppEnv> = async (c, next) => {
-  const requestId = c.req.header('x-request-id') ?? randomUUID();
+  const inbound = c.req.header('x-request-id');
+  const requestId = inbound && REQUEST_ID.test(inbound) ? inbound : randomUUID();
   c.set('requestId', requestId);
   c.set('log', logger.child({ requestId }));
   c.header('x-request-id', requestId);

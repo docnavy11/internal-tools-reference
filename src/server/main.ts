@@ -1,3 +1,4 @@
+import type { Server as HttpServer } from 'node:http';
 import { serve, type ServerType } from '@hono/node-server';
 import { Hono } from 'hono';
 import { env } from './env';
@@ -7,16 +8,47 @@ import { runMigrations } from './platform/db/migrate';
 import { logger } from './platform/http/logger';
 import { startWorker, type Worker } from './worker';
 
+const SHUTDOWN_TIMEOUT_MS = 30_000;
+
+let server: ServerType | undefined;
+let worker: Worker | undefined;
+let shuttingDown = false;
+
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info({ signal }, 'shutting down');
+  const forceExit = setTimeout(() => {
+    logger.error('shutdown timed out; exiting');
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  forceExit.unref();
+
+  const closeServer = new Promise<void>((resolve) => {
+    if (!server) return resolve();
+    server.close(() => resolve());
+    // Keep-alive connections would otherwise hold close() open until they time out.
+    (server as HttpServer).closeIdleConnections?.();
+  });
+  await Promise.all([closeServer, worker?.stop()]);
+  await closeDatabase();
+  process.exit(0);
+}
+
+// Registered before anything slow (migrations) so a SIGTERM during boot is handled.
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
+
 async function main(): Promise<void> {
   const runsWeb = env.APP_MODE === 'web' || env.APP_MODE === 'all';
   const runsWorker = env.APP_MODE === 'worker' || env.APP_MODE === 'all';
 
-  if (env.MIGRATE_ON_START && runsWeb) {
+  // Any mode may migrate; the migrator holds an advisory lock so concurrent web and
+  // worker replicas serialise instead of racing.
+  if (env.MIGRATE_ON_START) {
     await runMigrations();
   }
-
-  let server: ServerType | undefined;
-  let worker: Worker | undefined;
+  if (shuttingDown) return;
 
   if (runsWeb) {
     const app = createApp();
@@ -39,19 +71,6 @@ async function main(): Promise<void> {
   if (runsWorker) {
     worker = startWorker();
   }
-
-  let shuttingDown = false;
-  const shutdown = async (signal: string) => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    logger.info({ signal }, 'shutting down');
-    await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
-    await worker?.stop();
-    await closeDatabase();
-    process.exit(0);
-  };
-  process.on('SIGTERM', () => void shutdown('SIGTERM'));
-  process.on('SIGINT', () => void shutdown('SIGINT'));
 }
 
 main().catch((err) => {

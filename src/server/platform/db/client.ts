@@ -38,9 +38,8 @@ export async function pingDatabase(): Promise<boolean> {
   }
 }
 
-let closed = false;
-export async function closeDatabase(): Promise<void> {
-  if (closed) return;
-  closed = true;
-  await pool.end();
+let closing: Promise<void> | null = null;
+export function closeDatabase(): Promise<void> {
+  closing ??= pool.end();
+  return closing;
 }

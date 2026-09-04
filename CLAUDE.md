@@ -29,8 +29,11 @@ phases land.
 - Zod schemas in `src/shared` are the source of truth for shapes. Drizzle tables
   mirror them by hand. Do not add schema generation.
 - Network calls that change external state run in jobs, not in request handlers.
-- `process.env` is read only in `src/server/env.ts`. New variables go there, in
-  `.env.example`, and in `docs/CONFIG.md`, in the same change.
+- Under `src/`, `process.env` is read only in `src/server/env.ts`. Root tooling configs
+  (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `drizzle.config.ts`) and
+  `tests/**/setup` files may read it for tooling purposes. New variables go in `env.ts`,
+  `.env.example`, and `docs/CONFIG.md` in the same change, and nothing (compose, CI)
+  passes a variable `env.ts` does not read yet.
 - Migrations are generated with `npm run db:generate`, reviewed, committed. Never
   edit a migration that has been applied anywhere. Never delete the database to fix
   a schema problem; write a new migration.
