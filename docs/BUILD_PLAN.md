@@ -84,9 +84,13 @@ into the recipe and into two code fixes (empty `.env` values, shared `userRefSch
 Accept when: block 06 tests pass including the two-worker exclusivity test; worker
 mode runs as a separate compose service and processes jobs from web mode.
 
-## Phase 5: storage and notifications, notes example (medium)
+## Phase 5: storage and notifications, notes example (medium) — implemented 2026-09-04
 
-Blocks 08, 09, and the `notes` golden example.
+Blocks 08, 09, and the `notes` golden example. As built: storage, files, notify drivers
+and jobs, notes API by the lead (85 Vitest tests; S3 driver verified against MinIO, SMTP
+driver not yet against a real server); notes tab, attachment components and `FileField`
+by an agent (22 Playwright tests). Multipart routes carry a `bodyLimit` so oversized
+uploads are refused before buffering.
 
 - Storage adapter with disk and S3 drivers, files table, upload and download
   routes, sniffing, limits, trash job. MinIO in compose for the S3 check.

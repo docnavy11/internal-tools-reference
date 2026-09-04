@@ -48,8 +48,12 @@ interface StorageDriver {
 
 ## Client
 
-- `FileField` for forms (single file) and `AttachmentList` for detail pages with
-  upload, download and remove.
+- `client/platform/files/`: `AttachmentLink` (icon by type, name, size, inline preview for
+  images, download otherwise), `FilePicker` (controlled input with client-side size and
+  type checks), `formatBytes`. `FileField` in `client/platform/form/fields.tsx` binds a
+  `File | null` into react-hook-form for multipart forms. The notes tab is the reference
+  for attaching a file when creating a record; a multi-file attachment panel does not
+  exist yet and is added when an entity needs more than one file.
 
 ## As built (phase 5, server)
 

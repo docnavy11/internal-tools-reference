@@ -13,11 +13,20 @@ import { Badge } from '@/client/platform/ui/badge';
 import { Button } from '@/client/platform/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/client/platform/ui/tabs';
 import { CustomerStatusBadge } from '@/client/features/customers/list';
+import { NotesTab } from '@/client/features/notes/notes-tab';
 import {
   useCustomer,
   useDeleteCustomer,
   useRestoreCustomer,
 } from '@/client/features/customers/api';
+
+// Tabs whose name may appear in `?tab=`; anything else falls back to the details.
+const tabs = ['details', 'notes', 'history'] as const;
+type TabName = (typeof tabs)[number];
+
+function currentTab(value: string | null): TabName {
+  return tabs.includes(value as TabName) ? (value as TabName) : 'details';
+}
 
 /**
  * The golden example detail page: a field list, a history tab fed by
@@ -34,12 +43,17 @@ export function CustomerDetailPage() {
   const restore = useRestoreCustomer();
   const mayWrite = usePermission('customers:write');
   const mayDelete = usePermission('customers:delete');
+  // The child entity has its own permission, so the tab can be missing on a page the
+  // user may otherwise read.
+  const mayReadNotes = usePermission('notes:read');
 
   if (customer.isPending) return <LoadingPage label="Loading customer" />;
   if (customer.isError) return <NotFoundPage />;
 
   const record = customer.data;
   const deleted = record.deletedAt !== null;
+  const requestedTab = currentTab(searchParams.get('tab'));
+  const openTab = requestedTab === 'notes' && !mayReadNotes ? 'details' : requestedTab;
 
   const onDelete = async () => {
     try {
@@ -105,8 +119,8 @@ export function CustomerDetailPage() {
         }
       >
         <Tabs
-          // The open tab lives in the URL so a link can point straight at the history.
-          value={searchParams.get('tab') === 'history' ? 'history' : 'details'}
+          // The open tab lives in the URL so a link can point straight at the notes.
+          value={openTab}
           onValueChange={(value) =>
             setSearchParams(
               (previous) => {
@@ -121,6 +135,14 @@ export function CustomerDetailPage() {
         >
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
+            {mayReadNotes ? (
+              <TabsTrigger value="notes">
+                Notes
+                <Badge variant="secondary" className="ml-1.5 font-normal tabular-nums">
+                  {record.notesCount}
+                </Badge>
+              </TabsTrigger>
+            ) : null}
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
@@ -162,6 +184,12 @@ export function CustomerDetailPage() {
               ]}
             />
           </TabsContent>
+
+          {mayReadNotes ? (
+            <TabsContent value="notes" className="pt-6">
+              <NotesTab customerId={record.id} />
+            </TabsContent>
+          ) : null}
 
           <TabsContent value="history" className="pt-6">
             <HistoryTab entityPath={`/api/customers/${record.id}/history`} />

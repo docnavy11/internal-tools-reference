@@ -189,3 +189,18 @@ matching recipe. Run `npm run check` (typecheck, lint, tests). Done.
 - [ ] Playwright spec copied from `tests/e2e/customers.spec.ts`
 - [ ] tests including audit and permission checks
 - [ ] seed rows
+
+## Child entities
+
+For a record that belongs to a parent (the way `notes` belong to `customers`), copy
+`src/server/features/notes/` and `src/client/features/notes/` instead:
+
+- Server: table with a `parentId` foreign key (`onDelete: 'cascade'`), nested list and
+  create routes under `/api/<parents>/:parentId/<children>`, item routes under
+  `/api/<children>/:id`. Files attach through `storeFile(tx, actor, …)` in the create
+  transaction; multipart routes take `uploadBodyLimit`.
+- Client: `api.ts` (query key per parent; mutations also invalidate the parent's keys so
+  derived counts refresh) and a `<children>-tab.tsx` rendered from the parent's detail
+  page. No nav entry and no routes of its own.
+- A derived count on the parent is a correlated subquery in the parent's `baseQuery`
+  (see `notesCount` in `customers/service.ts`) and a field in the parent's shared schema.

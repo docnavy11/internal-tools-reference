@@ -7,6 +7,7 @@ import { diskDriver } from '../../src/server/platform/storage/disk';
 import { setStorageDriver } from '../../src/server/platform/storage/service';
 import { auditRows, drainJobs, json, signInAs } from './helpers';
 import { setSlackDriver, type SlackMessage } from '../../src/server/platform/notify/slack';
+import { env } from '../../src/server/env';
 
 let dir: string;
 beforeAll(async () => {
@@ -175,6 +176,24 @@ describe('notes', () => {
         ).json()
       ).notesCount,
     ).toBe(0);
+  });
+
+  it('rejects oversized multipart bodies before buffering them', async () => {
+    const member = await signInAs('m@example.com', 'member');
+    const customer = await createCustomer(member.cookie);
+    const big = 'x'.repeat(env.UPLOAD_MAX_BYTES + 2 * 1024 * 1024);
+    const res = await postNote(member.cookie, customer.id, 'huge', {
+      name: 'big.txt',
+      content: big,
+    });
+    expect(res.status).toBe(413);
+    expect((await res.json()).error.code).toBe('payload_too_large');
+    const json413 = await app.request('/api/customers', {
+      method: 'POST',
+      headers: { cookie: member.cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'y'.repeat(2 * 1024 * 1024) }),
+    });
+    expect(json413.status).toBe(413);
   });
 
   it('viewers can read notes but not write them', async () => {

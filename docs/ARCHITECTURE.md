@@ -4,9 +4,9 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phases 1 to 4 implemented** (skeleton; auth, authorization, shell, users
+Status: **phases 1 to 5 implemented** (skeleton; auth, authorization, shell, users
 admin; CRUD kit, audit log UI, customers golden example; job queue, scheduler, jobs
-admin, CSV import). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+admin, CSV import; storage, notifications, notes child entity). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
@@ -130,7 +130,7 @@ src/
       settings/                defineSetting, cache, routes
       webhooks/                inbox table, verify helpers
       http/                    request id, logging, error handler, validate (zod envelope),
-                               list (paging/sorting), rate-limit, redirect
+                               list (paging/sorting), rate-limit, body-limit, redirect
       csv/                     streaming CSV response with escaping
       csv/                     export streaming, import parsing
     features/<name>/           customers (golden example) and notes (child entity)
@@ -153,8 +153,9 @@ src/
                                bulk action bar, export, pagination
       form/                    EntityForm (zod resolver, server field errors) and fields
       detail/                  DetailPage, FieldList, HistoryTab, audit diff
-      api/                     fetch client with error envelope mapping and 401 hook,
-                               error helpers, user options query
+      api/                     fetch client (api, apiUpload) with error envelope mapping
+                               and 401 hook, error helpers, user options query
+      files/                   AttachmentLink, FilePicker, formatBytes
       auth/                    session provider, usePermission, RequireAuth,
                                RequirePermission, login page, redirect validation
       ui/                      shadcn components, copied in by the shadcn CLI
@@ -162,7 +163,8 @@ src/
     lib/                       utils (cn)
     features/<name>/
       api.ts, list.tsx, detail.tsx, form.tsx, nav.ts, routes.tsx
-                               (customers also has import-dialog.tsx)
+                               (customers also has import-dialog.tsx; notes, a child
+                               entity, has api.ts and notes-tab.tsx only)
     pages/                     home, settings/ (layout, users, audit, jobs*), later files
 drizzle/                       generated SQL migrations, never edited after apply
 tests/

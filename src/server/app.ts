@@ -3,6 +3,7 @@ import path from 'node:path';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
+import { jsonBodyLimit } from './platform/http/body-limit';
 import { authRoutes } from './platform/auth/routes';
 import { auditRoutes } from './platform/audit/routes';
 import { jobRoutes } from './platform/jobs/routes';
@@ -35,6 +36,12 @@ export function createApp(): Hono<AppEnv> {
   const api = new Hono<AppEnv>();
   api.use(sessionContext);
   api.use(csrfOriginCheck);
+  // Multipart upload routes override this with uploadBodyLimit on the route itself.
+  api.use('*', async (c, next) =>
+    c.req.header('content-type')?.startsWith('multipart/form-data')
+      ? next()
+      : jsonBodyLimit(c, next),
+  );
   api.route('/', authRoutes());
   api.route('/', userRoutes());
   api.route('/', auditRoutes());

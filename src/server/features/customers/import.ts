@@ -19,6 +19,7 @@ import { getDb, withTransaction } from '../../platform/db/client';
 import { csvLine } from '../../platform/csv/stream';
 import { AppError, notFound } from '../../platform/http/errors';
 import type { AppEnv } from '../../platform/http/types';
+import { uploadBodyLimit } from '../../platform/http/body-limit';
 import { validate } from '../../platform/http/validate';
 import { defineJob } from '../../platform/jobs/define';
 import { enqueue } from '../../platform/jobs/enqueue';
@@ -172,7 +173,7 @@ export function customerImportRoutes(): Hono<AppEnv> {
     );
   });
 
-  r.post('/customers/import', write, async (c) => {
+  r.post('/customers/import', write, uploadBodyLimit, async (c) => {
     const body = await c.req.parseBody();
     const file = body['file'];
     if (!(file instanceof File)) {

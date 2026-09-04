@@ -106,6 +106,13 @@ const columns: ColumnDef<Customer>[] = [
       ),
   },
   {
+    // Derived on the server from the child entity, so it is not in the sort allowlist
+    // and gets no sort button.
+    id: 'notesCount',
+    header: () => <div className="text-right">Notes</div>,
+    cell: ({ row }) => <div className="text-right tabular-nums">{row.original.notesCount}</div>,
+  },
+  {
     id: 'createdAt',
     header: 'Created',
     cell: ({ row }) => <RelativeTime value={row.original.createdAt} />,

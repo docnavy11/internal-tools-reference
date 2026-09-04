@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { cn } from '@/client/lib/utils';
 import { useUserOptions, userOptionLabel } from '@/client/platform/api/user-options';
+import { FilePicker } from '@/client/platform/files';
 import { Badge } from '@/client/platform/ui/badge';
 import { Button } from '@/client/platform/ui/button';
 import { Checkbox } from '@/client/platform/ui/checkbox';
@@ -247,6 +248,45 @@ export function CheckboxField({ name, label, description }: FieldProps) {
             </p>
           ) : null}
         </div>
+      )}
+    />
+  );
+}
+
+/**
+ * One file, or none, bound as a `File | null` in the form values. The form that owns it
+ * submits `multipart/form-data` through `apiUpload` rather than JSON, so validate the
+ * field with `z.instanceof(File).nullable()` and build the `FormData` in the submit
+ * handler. Size and type refusals are shown by the picker itself.
+ */
+export function FileField({
+  name,
+  label,
+  description,
+  accept,
+  maxBytes,
+}: FieldProps & { accept?: string; maxBytes?: number }) {
+  const { control } = useFormContext();
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FieldShell
+          id={name}
+          label={label}
+          description={description}
+          error={fieldState.error?.message}
+        >
+          <FilePicker
+            id={name}
+            accept={accept}
+            maxBytes={maxBytes}
+            aria-invalid={!!fieldState.error}
+            value={(field.value as File | null) ?? null}
+            onChange={(file) => field.onChange(file)}
+          />
+        </FieldShell>
       )}
     />
   );

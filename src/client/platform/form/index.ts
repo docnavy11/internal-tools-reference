@@ -2,6 +2,7 @@
 export { EntityForm, type EntityFormProps } from '@/client/platform/form/entity-form';
 export {
   CheckboxField,
+  FileField,
   NumberField,
   SelectField,
   TagsField,

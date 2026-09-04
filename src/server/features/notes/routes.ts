@@ -5,6 +5,7 @@ import type { Role } from '../../../shared/permissions';
 import { requirePermission } from '../../platform/auth/middleware';
 import { AppError } from '../../platform/http/errors';
 import type { AppEnv } from '../../platform/http/types';
+import { uploadBodyLimit } from '../../platform/http/body-limit';
 import { validate } from '../../platform/http/validate';
 import { createNote, deleteNote, listNotes, updateNote } from './service';
 
@@ -34,26 +35,32 @@ export function noteRoutes(): Hono<AppEnv> {
   );
 
   // multipart/form-data: body (text) and an optional file.
-  r.post('/customers/:customerId/notes', write, validate('param', customerParam), async (c) => {
-    const form = await c.req.parseBody();
-    const parsed = noteInput.safeParse({
-      body: typeof form['body'] === 'string' ? form['body'] : '',
-    });
-    if (!parsed.success)
-      throw new AppError('validation_error', 400, 'Invalid request', parsed.error.flatten());
-    const file = form['file'];
-    const attachment =
-      file instanceof File
-        ? { filename: file.name, bytes: Buffer.from(await file.arrayBuffer()) }
-        : null;
-    return c.json(
-      await createNote(c.get('actor'), c.req.valid('param').customerId, {
-        ...parsed.data,
-        attachment,
-      }),
-      201,
-    );
-  });
+  r.post(
+    '/customers/:customerId/notes',
+    write,
+    uploadBodyLimit,
+    validate('param', customerParam),
+    async (c) => {
+      const form = await c.req.parseBody();
+      const parsed = noteInput.safeParse({
+        body: typeof form['body'] === 'string' ? form['body'] : '',
+      });
+      if (!parsed.success)
+        throw new AppError('validation_error', 400, 'Invalid request', parsed.error.flatten());
+      const file = form['file'];
+      const attachment =
+        file instanceof File
+          ? { filename: file.name, bytes: Buffer.from(await file.arrayBuffer()) }
+          : null;
+      return c.json(
+        await createNote(c.get('actor'), c.req.valid('param').customerId, {
+          ...parsed.data,
+          attachment,
+        }),
+        201,
+      );
+    },
+  );
 
   r.patch(
     '/notes/:id',

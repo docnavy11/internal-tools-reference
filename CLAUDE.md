@@ -9,8 +9,9 @@ platform, health, APP_MODE switch, Docker, CI; auth (OIDC, magic link, dev login
 sessions), permissions with the route coverage test, audit log, users admin, UI shell,
 login page; CRUD kit (data table, forms, detail, history), audit page, the
 `customers` golden example; Postgres job queue and scheduler with the jobs admin page,
-CSV import. Phases 5 to 7 in `docs/BUILD_PLAN.md` are not started. Update this section
-as phases land.
+CSV import; file storage (disk, S3), email and Slack through jobs, the `notes` child
+entity with attachments. Phases 6 and 7 in `docs/BUILD_PLAN.md` are not started.
+Update this section as phases land.
 
 ## Read first
 
@@ -35,6 +36,10 @@ as phases land.
 - Zod schemas in `src/shared` are the source of truth for shapes. Drizzle tables
   mirror them by hand. Do not add schema generation.
 - Network calls that change external state run in jobs, not in request handlers.
+  Email and Slack go through `notify.email()` / `notify.slack()` from
+  `platform/notify`, never through the drivers directly.
+- Files are stored with `storeFile(tx, actor, …)` inside the transaction that creates
+  the owning record; multipart routes take `uploadBodyLimit`.
 - Under `src/`, `process.env` is read only in `src/server/env.ts`. Root tooling configs
   (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `drizzle.config.ts`) and
   `tests/**/setup` files may read it for tooling purposes. New variables go in `env.ts`,

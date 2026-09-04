@@ -22,5 +22,3 @@ export const noteInput = z.object({
   body: z.string().trim().min(1, 'Write something').max(5000),
 });
 export type NoteInput = z.infer<typeof noteInput>;
-
-export const noteSortColumns = ['createdAt'] as const;
