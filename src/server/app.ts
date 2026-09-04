@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
 import { authRoutes } from './platform/auth/routes';
+import { auditRoutes } from './platform/audit/routes';
 import { pingDatabase } from './platform/db/client';
 import { logger } from './platform/http/logger';
 import { accessLog, apiNotFound, handleError, requestContext } from './platform/http/middleware';
@@ -31,6 +32,7 @@ export function createApp(): Hono<AppEnv> {
   api.use(csrfOriginCheck);
   api.route('/', authRoutes());
   api.route('/', userRoutes());
+  api.route('/', auditRoutes());
   registerFeatures(api);
   api.all('*', apiNotFound);
   app.route('/api', api);

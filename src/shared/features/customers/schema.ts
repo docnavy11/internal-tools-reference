@@ -40,7 +40,7 @@ export type Customer = z.infer<typeof customerSchema>;
 // Create body. PATCH accepts a partial of this.
 export const customerInput = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200),
-  email: z.string().trim().email().max(320).nullable(),
+  email: z.string().trim().email().max(320).nullable().default(null),
   status: customerStatus.default('lead'),
   plan: customerPlan.default('free'),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),

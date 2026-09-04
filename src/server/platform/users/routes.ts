@@ -6,17 +6,20 @@ import {
   userFilters,
   userSortColumns,
 } from '../../../shared/features/users/schema';
-import { requirePermission } from '../auth/middleware';
+import { requireAuth, requirePermission } from '../auth/middleware';
 import { parseListQuery } from '../http/list';
 import { validate } from '../http/validate';
 import type { AppEnv } from '../http/types';
-import { inviteUser, listUsers, revokeUserSessions, updateUser } from './service';
+import { inviteUser, listUserOptions, listUsers, revokeUserSessions, updateUser } from './service';
 
 const idParam = z.object({ id: z.string().uuid() });
 
 export function userRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
   const manage = requirePermission('users:manage');
+
+  // For owner and actor pickers: any signed-in user may see colleagues' names.
+  r.get('/users/options', requireAuth(), async (c) => c.json(await listUserOptions()));
 
   r.get('/users', manage, async (c) => {
     const params = parseListQuery(c.req.query(), userFilters, userSortColumns);

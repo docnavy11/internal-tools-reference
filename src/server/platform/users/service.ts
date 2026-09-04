@@ -5,6 +5,7 @@ import type {
   UpdateUserInput,
   User,
   UserFilters,
+  UserOption,
 } from '../../../shared/features/users/schema';
 import { recordAudit, type Actor } from '../audit/record';
 import { deleteUserSessions } from '../auth/sessions';
@@ -46,6 +47,14 @@ export async function listUsers(params: ListParams & UserFilters): Promise<Page<
     db.select({ total: count() }).from(users).where(where),
   ]);
   return page(rows.map(serializeUser), totalOf(totalRows), params);
+}
+
+export async function listUserOptions(): Promise<UserOption[]> {
+  return getDb()
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.status, 'active'))
+    .orderBy(users.name, users.email);
 }
 
 export async function getUser(id: string): Promise<User> {

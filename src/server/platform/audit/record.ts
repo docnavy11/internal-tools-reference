@@ -30,6 +30,9 @@ export async function recordAudit(db: DbOrTx, actor: Actor, entry: AuditEntry): 
     metadata.requestId = actor.requestId;
   }
   await db.insert(auditLog).values({
+    // Application time rather than the column default: Postgres now() is the
+    // transaction start, so several rows in one transaction would tie.
+    at: new Date(),
     actorType: actor.type,
     actorId: actor.type === 'user' ? actor.userId : null,
     action: entry.action,

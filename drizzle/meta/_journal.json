@@ -22,6 +22,20 @@
       "when": 1788542252878,
       "tag": "0002_medical_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788543192444,
+      "tag": "0003_sweet_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788543345105,
+      "tag": "0004_slimy_pepper_potts",
+      "breakpoints": true
     }
   ]
 }
