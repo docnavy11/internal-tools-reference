@@ -10,8 +10,9 @@ sessions), permissions with the route coverage test, audit log, users admin, UI 
 login page; CRUD kit (data table, forms, detail, history), audit page, the
 `customers` golden example; Postgres job queue and scheduler with the jobs admin page,
 CSV import; file storage (disk, S3), email and Slack through jobs, the `notes` child
-entity with attachments. Phases 6 and 7 in `docs/BUILD_PLAN.md` are not started.
-Update this section as phases land.
+entity with attachments; settings registry with its page, vendor client, webhook inbox
+with its page, example vendor; security headers, error reporter, client error endpoint.
+Phase 7 (hardening and handover) is in progress. Update this section as phases land.
 
 ## Read first
 
@@ -40,6 +41,10 @@ Update this section as phases land.
   `platform/notify`, never through the drivers directly.
 - Files are stored with `storeFile(tx, actor, …)` inside the transaction that creates
   the owning record; multipart routes take `uploadBodyLimit`.
+- Runtime-editable behaviour is a setting (`defineSettings` in the feature's
+  `settings.ts`, read with `getSetting`), never a hard-coded constant; secrets stay in env.
+- Inbound webhooks go through `registerWebhook` (verify raw body, store, enqueue); vendor
+  calls go through `createVendorClient`, and state-changing calls run in jobs.
 - Under `src/`, `process.env` is read only in `src/server/env.ts`. Root tooling configs
   (`vite.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `drizzle.config.ts`) and
   `tests/**/setup` files may read it for tooling purposes. New variables go in `env.ts`,

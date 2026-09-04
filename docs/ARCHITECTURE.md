@@ -4,9 +4,10 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phases 1 to 5 implemented** (skeleton; auth, authorization, shell, users
-admin; CRUD kit, audit log UI, customers golden example; job queue, scheduler, jobs
-admin, CSV import; storage, notifications, notes child entity). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+Status: **phases 1 to 6 implemented, phase 7 (hardening) in progress** (skeleton;
+auth, authorization, shell, users admin; CRUD kit, audit log UI, customers golden
+example; job queue, scheduler, jobs admin, CSV import; storage, notifications, notes
+child entity; settings, integrations with webhook inbox). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
@@ -169,7 +170,8 @@ src/
       api.ts, list.tsx, detail.tsx, form.tsx, nav.ts, routes.tsx
                                (customers also has import-dialog.tsx; notes, a child
                                entity, has api.ts and notes-tab.tsx only)
-    pages/                     home, settings/ (layout, users, audit, jobs*), later files
+    pages/                     home, settings/ (layout, general*, users, audit, jobs*,
+                               webhooks*)
 drizzle/                       generated SQL migrations, never edited after apply
 tests/
   server/                      Vitest, real Postgres

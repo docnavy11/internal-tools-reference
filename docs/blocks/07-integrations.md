@@ -88,6 +88,13 @@ HMAC verification. Exists so the recipe points at real code.
   when `EXAMPLE_VENDOR_API_KEY` is set. `integrations/index.ts` is the registry.
 - Not built: a webhook-specific admin for outbound calls; those are visible through jobs.
 
+## As built (phase 6, client)
+
+- `/settings/webhooks` (`pages/settings/webhooks*.tsx`): DataTable with vendor, status and
+  event type filters, polling while a row is pending; sheet with metadata, headers and
+  payload as JSON, Replay behind a confirmation. Stored `x-*` headers (including the
+  signature, which is not a secret) are visible to `jobs:manage`.
+
 ## Done when
 
 - Tests: retry on 503 then success, no retry on 400, timeout raises, signature

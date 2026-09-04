@@ -39,7 +39,11 @@ export function SettingsLayout() {
   );
 }
 
-/** `/settings` itself has no content: send the user to the first page they may see. */
+/**
+ * `/settings` itself has no content: send the user to the first page they may see.
+ * General sorts first in the registry, so an admin lands on `/settings/general` and
+ * anyone else on the first page their permissions allow.
+ */
 export function SettingsIndexRedirect() {
   const entries = useNavEntries('settings');
   const first = entries[0];

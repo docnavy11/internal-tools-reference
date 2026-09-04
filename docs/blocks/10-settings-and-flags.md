@@ -52,6 +52,13 @@ Jobs (06), Webhooks (07), Audit (05), Files (09). Each is gated by its permissio
   `features/index.ts`. Customers has `customers.slack_on_create`, `customers.default_plan`,
   `customers.trash_days`; the follow-up job and the purge job read them.
 
+## As built (phase 6, client)
+
+- `/settings/general` (`pages/settings/general*.tsx`): one card per group, control chosen
+  by `type` (switch, select, number, text), inline validation message from the server,
+  "Default: …" hint and "Reset to default" when overridden, who changed it and when.
+- `/settings` redirects to the first settings entry the user may see; General sorts first.
+
 ## Done when
 
 - Golden example reads a setting to decide whether to post to Slack.

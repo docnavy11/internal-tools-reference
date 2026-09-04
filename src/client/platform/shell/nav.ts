@@ -1,4 +1,12 @@
-import { HomeIcon, ListChecksIcon, ScrollTextIcon, UsersIcon, type LucideIcon } from 'lucide-react';
+import {
+  HomeIcon,
+  ListChecksIcon,
+  ScrollTextIcon,
+  SlidersHorizontalIcon,
+  UsersIcon,
+  WebhookIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { useSession } from '@/client/platform/auth/session';
 import type { Permission } from '@/shared/permissions';
 // One import line per feature that appears in the navigation.
@@ -31,6 +39,15 @@ export const navEntries: NavEntry[] = [
   { label: 'Home', icon: HomeIcon, to: '/', group: 'main', order: 10 },
   customersNav,
   {
+    // First in the settings area, and so where `/settings` lands for an admin.
+    label: 'General',
+    icon: SlidersHorizontalIcon,
+    to: '/settings/general',
+    permission: 'settings:manage',
+    group: 'settings',
+    order: 5,
+  },
+  {
     label: 'Users',
     icon: UsersIcon,
     to: '/settings/users',
@@ -53,6 +70,14 @@ export const navEntries: NavEntry[] = [
     permission: 'jobs:manage',
     group: 'settings',
     order: 30,
+  },
+  {
+    label: 'Webhooks',
+    icon: WebhookIcon,
+    to: '/settings/webhooks',
+    permission: 'jobs:manage',
+    group: 'settings',
+    order: 40,
   },
 ];
 

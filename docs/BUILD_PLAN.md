@@ -101,9 +101,12 @@ uploads are refused before buffering.
 
 Accept when: block 08 and 09 tests pass; a file round-trips with both drivers.
 
-## Phase 6: settings, integrations (medium)
+## Phase 6: settings, integrations (medium) — implemented 2026-09-04
 
-Blocks 07, 10.
+Blocks 07, 10. As built: settings registry and API, vendor client, webhook inbox and
+example vendor by the lead (99 Vitest tests at that point); settings and webhooks pages
+by an agent (27 Playwright tests). The Slack announcement on customer creation is gated
+by `customers.slack_on_create`; the purge threshold by `customers.trash_days`.
 
 - Settings registry, cache, page, audit. Customers reads `slack_on_create`.
 - Vendor client helper, webhook inbox, verify helpers, processing job, webhooks

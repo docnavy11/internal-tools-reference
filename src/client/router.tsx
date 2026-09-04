@@ -9,6 +9,8 @@ import { SettingsIndexRedirect, SettingsLayout } from '@/client/pages/settings/l
 import { UsersPage } from '@/client/pages/settings/users';
 import { AuditPage } from '@/client/pages/settings/audit';
 import { JobsPage } from '@/client/pages/settings/jobs';
+import { SettingsGeneralPage } from '@/client/pages/settings/general';
+import { WebhooksPage } from '@/client/pages/settings/webhooks';
 // One import line per feature.
 import { customerRoutes } from '@/client/features/customers/routes';
 
@@ -37,6 +39,15 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <SettingsIndexRedirect /> },
           {
+            path: 'general',
+            element: (
+              <RequirePermission permission="settings:manage">
+                <SettingsGeneralPage />
+              </RequirePermission>
+            ),
+            handle: { title: 'General' },
+          },
+          {
             path: 'users',
             element: (
               <RequirePermission permission="users:manage">
@@ -62,6 +73,15 @@ export const router = createBrowserRouter([
               </RequirePermission>
             ),
             handle: { title: 'Jobs' },
+          },
+          {
+            path: 'webhooks',
+            element: (
+              <RequirePermission permission="jobs:manage">
+                <WebhooksPage />
+              </RequirePermission>
+            ),
+            handle: { title: 'Webhooks' },
           },
         ],
       },
