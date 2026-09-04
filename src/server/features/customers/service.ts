@@ -14,6 +14,8 @@ import { getDb, withTransaction, type DbOrTx } from '../../platform/db/client';
 import { totalOf } from '../../platform/db/count';
 import { AppError, notFound } from '../../platform/http/errors';
 import { offset, orderBy, page } from '../../platform/http/list';
+import { enqueue } from '../../platform/jobs/enqueue';
+import { afterCustomerCreated } from './jobs';
 import { serializeCustomer } from './serialize';
 import { customers } from './table';
 
@@ -134,6 +136,8 @@ export async function createCustomer(actor: Actor, input: CustomerInput): Promis
       entityId: after.id,
       after,
     });
+    // Same transaction: the follow-up job exists only if the customer does.
+    await enqueue(afterCustomerCreated, { customerId: after.id }, { tx });
     return after;
   });
 }

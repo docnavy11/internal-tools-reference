@@ -3,4 +3,5 @@
 
 export { users, sessions, magicLinkTokens, oidcStates } from '../auth/table';
 export { auditLog } from '../audit/table';
+export { jobs, schedules } from '../jobs/table';
 export { customers } from '../../features/customers/table';

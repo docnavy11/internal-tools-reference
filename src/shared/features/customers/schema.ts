@@ -102,14 +102,17 @@ export const customerImportRow = z.object({
   email: z.preprocess((v) => (v === '' ? null : v), z.string().trim().email().max(320).nullable()),
   status: z.preprocess((v) => (v === '' ? undefined : v), customerStatus.default('lead')),
   plan: z.preprocess((v) => (v === '' ? undefined : v), customerPlan.default('free')),
+  // Parsed twice (at upload, and again as the job's payload), so arrays pass through.
   tags: z.preprocess(
     (v) =>
-      typeof v === 'string'
+      Array.isArray(v)
         ? v
-            .split(';')
-            .map((t) => t.trim())
-            .filter(Boolean)
-        : [],
+        : typeof v === 'string'
+          ? v
+              .split(';')
+              .map((t) => t.trim())
+              .filter(Boolean)
+          : [],
     z.array(z.string().max(40)).max(20),
   ),
   owner: z.preprocess((v) => (v === '' ? null : v), z.string().trim().email().nullable()),

@@ -46,6 +46,12 @@ export const envSchema = z
     AUTH_MAGIC_LINK: bool,
     SESSION_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
+    JOBS_CONCURRENCY: z.coerce.number().int().min(1).max(64).default(4),
+    JOBS_POLL_MS: z.coerce.number().int().min(50).default(1000),
+    JOBS_RETENTION_DAYS: z.coerce.number().int().min(1).default(30),
+    JOBS_SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).default(30000),
+    AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional(),
+
     EMAIL_DRIVER: z.enum(['console', 'smtp']).default('console'),
     EMAIL_FROM: z.string().optional(),
     SMTP_URL: z.string().optional(),

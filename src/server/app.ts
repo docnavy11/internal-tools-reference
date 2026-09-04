@@ -5,6 +5,8 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { csrfOriginCheck, sessionContext } from './platform/auth/middleware';
 import { authRoutes } from './platform/auth/routes';
 import { auditRoutes } from './platform/audit/routes';
+import { jobRoutes } from './platform/jobs/routes';
+import './platform/jobs/builtin';
 import { pingDatabase } from './platform/db/client';
 import { logger } from './platform/http/logger';
 import { accessLog, apiNotFound, handleError, requestContext } from './platform/http/middleware';
@@ -33,6 +35,7 @@ export function createApp(): Hono<AppEnv> {
   api.route('/', authRoutes());
   api.route('/', userRoutes());
   api.route('/', auditRoutes());
+  api.route('/', jobRoutes());
   registerFeatures(api);
   api.all('*', apiNotFound);
   app.route('/api', api);
