@@ -125,13 +125,15 @@ src/
       webhooks/                inbox table, verify helpers
       http/                    request id, logging, error handler, validate (zod envelope),
                                list (paging/sorting), rate-limit, redirect
+      csv/                     streaming CSV response with escaping
       csv/                     export streaming, import parsing
     features/<name>/
       table.ts                 Drizzle table definition
+      serialize.ts             row (+ joined user) to the shared API shape
       service.ts               all reads and writes for the entity, audit calls inside
-      routes.ts                Hono routes: validate, authorize, call service
-      jobs.ts                  optional background jobs for this feature
-      index.ts                 registers routes, jobs, nav entry
+      routes.ts                Hono routes: authorize, validate, call service
+      jobs.ts                  optional background jobs for this feature (phase 4)
+      index.ts                 registers routes and jobs with the api
     integrations/<vendor>/     outbound client and inbound webhook handler
   client/
     main.tsx, router.tsx       router.tsx imports each feature's routes (one line each)

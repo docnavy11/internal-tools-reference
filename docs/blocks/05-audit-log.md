@@ -41,6 +41,17 @@ decision; a disabled-by-default scheduled job can prune rows older than
   browser from `before` and `after`.
 - `HistoryTab` on detail pages shows the same timeline for one record.
 
+## As built (phase 3)
+
+- `audit_log.at` is set from application time and a `seq` identity column breaks ties;
+  lists order by `(at, seq)`. Postgres `now()` is the transaction start time, so rows
+  written in one transaction would otherwise tie.
+- `platform/audit/service.ts`: `listAudit`, `entityHistory(entityType, id, params)`,
+  `auditMeta()` (distinct actions and entity types for filters).
+- Routes: `GET /api/audit`, `GET /api/audit/meta` (audit:read); each feature exposes
+  `GET /api/<plural>/:id/history` behind its own read permission.
+- Retention pruning job: phase 4.
+
 ## Done when
 
 - Every write in the golden example produces exactly one row (bulk: one per record).

@@ -1,8 +1,8 @@
 # Recipe: add an entity
 
-Target procedure. It will be verified against the `customers` golden example during
-phase 3 and corrected where the code disagrees. Until then treat it as the intended
-shape.
+Server steps (1 to 5, 7, 8) were corrected against the `customers` golden example in
+phase 3; copy from `src/server/features/customers/` and `src/shared/features/customers/`.
+Client steps follow the same example under `src/client/features/customers/`.
 
 Running example: `vendors` with fields `name`, `email`, `status` (`active`,
 `inactive`), `ownerId`.
@@ -36,6 +36,9 @@ export const vendorFilters = z.object({
 });
 ```
 
+Multi-value filters use `csvArray(...)` from `src/shared/query.ts` (one query parameter,
+comma-separated). Give optional create fields a `.default(...)` so a body may omit them.
+
 Add permission strings `vendors:read`, `vendors:write`, `vendors:delete` to
 `src/shared/permissions.ts` and assign them to roles.
 
@@ -62,24 +65,31 @@ export const vendors = pgTable('vendors', {
 Export it from `src/server/platform/db/schema.ts` (the registry Drizzle reads). Run
 `npm run db:generate`, read the SQL it produced, then `npm run db:migrate`.
 
-## 3. Service
+## 3. Serializer and service
 
-Create `service.ts` with `list`, `get`, `create`, `update`, `remove`, `bulk`, plus
-`serialize(row): Vendor`. Every write is `withTransaction` and calls
-`audit.record(tx, ctx, ...)`. Sort allowlist is declared here. Copy the shape from
-`customers/service.ts`; do not invent a different one.
+Create `serialize.ts` with `serializeVendor(row, owner): Vendor` (dates to ISO strings,
+joined user as `{ id, name, email }`). This is the API shape and what lands in audit
+snapshots, so nothing internal leaks.
+
+Create `service.ts` from `customers/service.ts`: `whereFor(filters)`, `baseQuery(db)`
+with the owner join, `listVendors`, `iterateVendors` (CSV), `getVendor`, `createVendor`,
+`updateVendor`, `deleteVendor` (soft), `restoreVendor`, `bulkVendors`. Every write is
+`withTransaction` and calls `recordAudit(tx, actor, ...)` with before and after
+snapshots. The sort allowlist (`sortColumns`) lives here.
 
 ## 4. Routes
 
-Create `routes.ts` mapping the CRUD API contract (`../blocks/04-crud-kit.md`) onto
-the service. Each route: `requirePermission`, `zValidator`, call service, return.
-Add `GET /:id/history` through the audit helper and `?format=csv` through
-`csvStream`.
+Create `routes.ts` from `customers/routes.ts`: one `requirePermission(...)` per verb,
+`validate('json' | 'param' | 'query', schema)` from `platform/http/validate.ts` (never
+`zValidator` directly), then a service call. Includes `?format=csv` via `csvResponse`
+with a `csvColumns` list, `POST /bulk` (delete action checks the delete permission),
+`POST /:id/restore`, and `GET /:id/history` via `entityHistory('vendor', id, params)`.
 
 ## 5. Register on the server
 
-Create `index.ts` exporting `registerVendors(app)` and add one line to
-`src/server/features/index.ts`.
+Create `index.ts` exporting `registerVendors(api)` that does `api.route('/', vendorRoutes())`
+and add one line to `src/server/features/index.ts`. The authorization coverage test
+fails if any new route lacks a permission marker.
 
 ## 6. Client
 
@@ -97,10 +107,12 @@ Add one import line in `src/client/router.tsx`.
 
 ## 7. Tests
 
-Create `tests/server/features/vendors.test.ts` from the customers test: list
-filtering, create with audit, update with audit, soft delete hides from list,
-viewer gets 403 on write, sort allowlist, CSV export header row. Add the drift test
-that a serialized row passes `vendorSchema`.
+Create `tests/server/vendors.test.ts` from `tests/server/customers.test.ts`: permissions
+per role, create with defaults and audit snapshot, validation envelope, update with
+before/after, list filters/search/sort/paging, soft delete and restore with history
+order, bulk auditing per record, CSV escaping. Use `signInAs` and `auditRows` from
+`tests/server/helpers.ts`. Remember rows created inside one test share a Postgres
+`now()`, so never rely on `createdAt` ordering in a test; pass an explicit `sort`.
 
 ## 8. Seed and docs
 
@@ -109,11 +121,12 @@ matching recipe. Run `npm run check` (typecheck, lint, tests). Done.
 
 ## Checklist
 
-- [ ] schema.ts with record, input, filters
+- [ ] schema.ts with record, input (defaults for optional fields), filters, sort columns, bulk input
 - [ ] permissions added to roles
 - [ ] table.ts, exported from schema registry, migration generated and applied
+- [ ] serialize.ts
 - [ ] service.ts with audit on every write
-- [ ] routes.ts with permission on every route
+- [ ] routes.ts with permission on every route, using validate()
 - [ ] server index.ts registered
 - [ ] list, detail, form, nav, routes on the client, registered
 - [ ] tests including audit and permission checks

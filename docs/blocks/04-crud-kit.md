@@ -59,6 +59,19 @@ columns declared in `service.ts`.
 
 `ConfirmDialog`, `EmptyState`, `PageHeader`, `StatusBadge` shared in `client/platform/ui/`.
 
+## As built (phase 3, server)
+
+- `parseListQuery(query, filtersSchema, sortColumns)` in `platform/http/list.ts`;
+  multi-value filters are comma-separated single parameters (`csvArray` in
+  `src/shared/query.ts`).
+- `csvResponse(c, filename, columns, asyncIterable)` in `platform/csv/stream.ts` streams
+  rows in batches, prefixes cells starting with `= + - @` with an apostrophe (formula
+  injection), joins arrays with `;`, and follows the list's `sort`/`order`.
+- Bulk actions are a Zod discriminated union; each affected record gets its own audit
+  row with `metadata.bulk` set, and no-op changes are skipped.
+- `POST /:id/restore` complements soft delete. PATCH on a deleted record is 409 `deleted`.
+- CSV import (`POST /import`) arrives with jobs in phase 4.
+
 ## Done when
 
 - The `customers` golden example uses `DataTable`, `EntityForm` and `DetailPage`
