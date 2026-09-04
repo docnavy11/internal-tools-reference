@@ -93,3 +93,55 @@ export type CustomerBulkInput = z.infer<typeof customerBulkInput>;
 export interface BulkResult {
   affected: number;
 }
+
+// CSV import. POST /api/customers/import (multipart, field `file`) validates every row
+// synchronously and enqueues the valid ones as one job. Columns: name, email, status,
+// plan, tags (semicolon-separated), owner (email of an active user), notes.
+export const customerImportRow = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  email: z.preprocess((v) => (v === '' ? null : v), z.string().trim().email().max(320).nullable()),
+  status: z.preprocess((v) => (v === '' ? undefined : v), customerStatus.default('lead')),
+  plan: z.preprocess((v) => (v === '' ? undefined : v), customerPlan.default('free')),
+  tags: z.preprocess(
+    (v) =>
+      typeof v === 'string'
+        ? v
+            .split(';')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [],
+    z.array(z.string().max(40)).max(20),
+  ),
+  owner: z.preprocess((v) => (v === '' ? null : v), z.string().trim().email().nullable()),
+  notes: z.preprocess((v) => (v === '' ? null : v), z.string().max(5000).nullable()),
+});
+export type CustomerImportRow = z.infer<typeof customerImportRow>;
+export const customerImportColumns = [
+  'name',
+  'email',
+  'status',
+  'plan',
+  'tags',
+  'owner',
+  'notes',
+] as const;
+
+export interface ImportRejectedRow {
+  line: number; // 1-based line in the file, header is line 1
+  errors: string[];
+}
+
+// 202 response of POST /api/customers/import
+export interface ImportAccepted {
+  jobId: string;
+  accepted: number;
+  rejected: ImportRejectedRow[];
+}
+
+// GET /api/customers/import/:jobId (permission customers:write)
+export interface ImportStatus {
+  jobId: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'dead' | 'cancelled';
+  result: { created: number; failed: { line: number; error: string }[] } | null;
+  lastError: string | null;
+}
