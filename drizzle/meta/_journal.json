@@ -50,6 +50,13 @@
       "when": 1788546676185,
       "tag": "0006_eager_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788547780392,
+      "tag": "0007_aspiring_lizard",
+      "breakpoints": true
     }
   ]
 }

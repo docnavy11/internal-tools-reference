@@ -127,10 +127,12 @@ src/
       storage/                 driver interface, disk and s3 drivers, sniff, files table,
                                service, download route, trash purge job
       notify/                  notify.email/notify.slack (jobs), email and slack drivers
-      settings/                defineSetting, cache, routes
-      webhooks/                inbox table, verify helpers
+      settings/                registry (defineSettings), typed getSetting with cache, routes
+      webhooks/                inbox table, verify helpers, defineWebhook/registerWebhook,
+                               processing job, admin routes
       http/                    request id, logging, error handler, validate (zod envelope),
-                               list (paging/sorting), rate-limit, body-limit, redirect
+                               list (paging/sorting), rate-limit, body-limit, redirect,
+                               vendor-client (outbound HTTP with retries)
       csv/                     streaming CSV response with escaping
       csv/                     export streaming, import parsing
     features/<name>/           customers (golden example) and notes (child entity)
@@ -139,9 +141,11 @@ src/
       service.ts               all reads and writes for the entity, audit calls inside
       routes.ts                Hono routes: authorize, validate, call service
       jobs.ts                  background jobs and schedules for this feature
+      settings.ts              runtime settings declared with defineSettings
       import.ts                CSV import routes and job (customers example)
       index.ts                 registers routes and jobs with the api
-    integrations/<vendor>/     outbound client and inbound webhook handler
+    integrations/<vendor>/     client.ts, webhook.ts, index.ts (example-vendor ships)
+    integrations/index.ts      registry, one line per integration
   client/
     main.tsx, router.tsx       router.tsx imports each feature's routes (one line each)
     platform/

@@ -4,6 +4,8 @@ import { recordAudit } from '../../platform/audit/record';
 import { getDb, withTransaction } from '../../platform/db/client';
 import { defineJob, defineSchedule } from '../../platform/jobs/define';
 import { notify } from '../../platform/notify';
+import { getSetting } from '../../platform/settings';
+import { customerSettings } from './settings';
 import { serializeCustomer } from './serialize';
 import { customers } from './table';
 import { users } from '../../platform/auth/table';
@@ -34,7 +36,16 @@ export const afterCustomerCreated = defineJob(
         return { skipped: true };
       }
       const customer = serializeCustomer(row.customer, row.owner);
-      // Phase 6 gates this behind a setting; until then every creation is announced.
+      const announce = await getSetting(customerSettings['customers.slack_on_create']);
+      if (!announce) {
+        await recordAudit(tx, ctx.actor, {
+          action: 'customers.after_create',
+          entityType: 'customer',
+          entityId: customerId,
+          metadata: { name: customer.name, notified: false },
+        });
+        return { customerId, notified: false };
+      }
       await notify.slack(
         {
           text: `New customer: *${customer.name}*${customer.owner ? ` (owner ${customer.owner.name ?? customer.owner.email})` : ''}, plan ${customer.plan}, status ${customer.status}.`,
@@ -54,13 +65,12 @@ export const afterCustomerCreated = defineJob(
   { maxAttempts: 3, timeoutMs: 30_000 },
 );
 
-// Soft-deleted customers older than this are removed for good. A setting in phase 6.
-export const CUSTOMER_TRASH_DAYS = 30;
-
 export const purgeDeletedCustomers = defineJob(
   'customers.purge_deleted',
-  z.object({ olderThanDays: z.number().int().min(1).default(CUSTOMER_TRASH_DAYS) }),
-  async ({ olderThanDays }, ctx) => {
+  z.object({ olderThanDays: z.number().int().min(1).optional() }),
+  async (payload, ctx) => {
+    const olderThanDays =
+      payload.olderThanDays ?? (await getSetting(customerSettings['customers.trash_days']));
     const cutoff = new Date(Date.now() - olderThanDays * 24 * 3600 * 1000);
     return withTransaction(async (tx) => {
       const rows = await tx
@@ -89,9 +99,8 @@ export const purgeDeletedCustomers = defineJob(
   },
   { maxAttempts: 3, timeoutMs: 5 * 60_000 },
 );
-defineSchedule('customers.purge_deleted.daily', '0 2 * * *', purgeDeletedCustomers, {
-  olderThanDays: CUSTOMER_TRASH_DAYS,
-});
+// The schedule passes no threshold; the job reads the customers.trash_days setting.
+defineSchedule('customers.purge_deleted.daily', '0 2 * * *', purgeDeletedCustomers, {});
 
 // Keeps getDb imported for symmetry with other feature modules that read outside a tx.
 void getDb;

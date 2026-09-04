@@ -5,5 +5,7 @@ export { users, sessions, magicLinkTokens, oidcStates } from '../auth/table';
 export { auditLog } from '../audit/table';
 export { jobs, schedules } from '../jobs/table';
 export { files } from '../storage/table';
+export { settings } from '../settings/table';
+export { webhookEvents } from '../webhooks/table';
 export { customers } from '../../features/customers/table';
 export { notes } from '../../features/notes/table';

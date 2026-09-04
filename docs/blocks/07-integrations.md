@@ -67,6 +67,27 @@ re-enqueues processing.
 covered by tests with a mocked `fetch`, and an inbound `widget.updated` webhook with
 HMAC verification. Exists so the recipe points at real code.
 
+## As built (phase 6, server)
+
+- `platform/http/vendor-client.ts`: `createVendorClient({ name, baseUrl, headers, timeoutMs,
+  retries, fetchImpl })` with `get/post/patch/del(path, { schema, body, query, idempotencyKey })`.
+  Retries 408/425/429/5xx and network errors on idempotent calls (GET, HEAD, DELETE, or any
+  method with an `idempotencyKey`), honours `Retry-After`, logs one line per attempt,
+  throws `VendorError(vendor, status, body)`; status 0 means a network error or timeout.
+- `platform/webhooks/`: `table.ts` (inbox with unique vendor + external id), `verify.ts`
+  (`hmacSha256Header` with optional timestamp tolerance, `sharedTokenHeader`), `define.ts`
+  (`defineWebhook`, `registerWebhook(api, def)` mounting `POST /api/webhooks/<vendor>` as a
+  public, rate-limited route that verifies the raw body, stores, acknowledges duplicates
+  with `{ ok, duplicate: true }`, and enqueues `webhooks.process`), `service.ts`,
+  `routes.ts` (admin list/detail/replay/vendors behind `jobs:manage`).
+- The processing job runs the vendor handler in its own transaction and records the
+  outcome (processed, or error and attempts) on the row outside it, so a failed handler
+  leaves a trace and its writes are rolled back.
+- `integrations/example-vendor/`: `client.ts` (widgets), `webhook.ts` (HMAC over
+  `${timestamp}.${body}`, `widget.failing` simulates a failure), `index.ts` registers only
+  when `EXAMPLE_VENDOR_API_KEY` is set. `integrations/index.ts` is the registry.
+- Not built: a webhook-specific admin for outbound calls; those are visible through jobs.
+
 ## Done when
 
 - Tests: retry on 503 then success, no retry on 400, timeout raises, signature

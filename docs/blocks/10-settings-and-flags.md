@@ -41,6 +41,17 @@ const on = await settings.get('customers.slack_on_create');
 `/settings` is the admin area with sub-pages: General (this block), Users (02),
 Jobs (06), Webhooks (07), Audit (05), Files (09). Each is gated by its permission.
 
+## As built (phase 6, server)
+
+- `platform/settings/`: `registry.ts` (`defineSetting`, `defineSettings` with typed
+  results, `settingType` derives the UI control from the Zod schema), `service.ts`
+  (`getSetting(def)` typed, 30 s process cache, invalidated on write; `setSetting` validates,
+  upserts or deletes on `null`, audits `settings.update`; a stored value that no longer
+  fits the schema falls back to the default with a warning), `routes.ts`.
+- Features declare settings in `features/<name>/settings.ts` and that file is imported by
+  `features/index.ts`. Customers has `customers.slack_on_create`, `customers.default_plan`,
+  `customers.trash_days`; the follow-up job and the purge job read them.
+
 ## Done when
 
 - Golden example reads a setting to decide whether to post to Slack.
