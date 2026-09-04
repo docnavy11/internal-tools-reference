@@ -54,6 +54,7 @@ at build time and recorded in `package.json`.
 | Tables | TanStack Table | 8.x | Headless; rendered with shadcn table primitives. |
 | Forms | react-hook-form + `@hookform/resolvers/zod` | 7.x | |
 | UI | shadcn/ui on Tailwind CSS | shadcn CLI 4, Tailwind 4 | Components are copied into `src/client/platform/ui`. The CLI installs the unified `radix-ui` package, `class-variance-authority`, `lucide-react`, `tw-animate-css` and the Geist font. See `adr/0009`. |
+| Toasts | sonner | 2.x | Installed by the shadcn CLI; `ui/sonner.tsx` is rewired to the shell's own theme context so `next-themes` is not needed. |
 | Logging | pino | 9.x | JSON to stdout. |
 | Email | nodemailer over SMTP | 6.x | Works with any provider that offers SMTP. |
 | Slack | plain `fetch` to `chat.postMessage` | n/a | No SDK. |

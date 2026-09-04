@@ -27,9 +27,10 @@ export const nav = { label: 'Customers', icon: Users, to: '/customers',
 `client/router.tsx` imports each feature's routes and nav. Adding a feature is one
 import line.
 
-## Shared components (`client/platform/ui/`)
+## Shared components (`client/platform/shell/`)
 
-Beyond shadcn primitives: `PageHeader`, `EmptyState` (icon, title, description,
+`client/platform/ui/` holds only what the shadcn CLI writes. Our own building blocks
+live in `client/platform/shell/`: `PageHeader`, `EmptyState` (icon, title, description,
 action), `ConfirmDialog` (promise-based `confirm()` helper), `StatusBadge` (maps an
 enum to colour), `UserAvatar`, `RelativeTime` (with absolute time in a tooltip),
 `CopyButton`, `LoadingPage`, `NotFoundPage`, `NoAccessPage`, `ErrorBoundary`.
