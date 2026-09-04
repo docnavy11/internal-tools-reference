@@ -124,15 +124,16 @@ src/
       audit/                   table, record(); routes arrive in phase 3
       jobs/                    define (jobs + schedules), enqueue, worker (claim, run,
                                reap, scheduler), service, routes, builtin housekeeping
-      storage/                 adapter, drivers
-      notify/                  email and slack adapters, drivers, notify jobs
+      storage/                 driver interface, disk and s3 drivers, sniff, files table,
+                               service, download route, trash purge job
+      notify/                  notify.email/notify.slack (jobs), email and slack drivers
       settings/                defineSetting, cache, routes
       webhooks/                inbox table, verify helpers
       http/                    request id, logging, error handler, validate (zod envelope),
                                list (paging/sorting), rate-limit, redirect
       csv/                     streaming CSV response with escaping
       csv/                     export streaming, import parsing
-    features/<name>/
+    features/<name>/           customers (golden example) and notes (child entity)
       table.ts                 Drizzle table definition
       serialize.ts             row (+ joined user) to the shared API shape
       service.ts               all reads and writes for the entity, audit calls inside

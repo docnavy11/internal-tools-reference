@@ -36,6 +36,23 @@ Toasts for immediate feedback are in the UI shell. Persistent in-app notificatio
 (a bell with unread items) are out of scope for the template; a future ADR can add a
 `notifications` table if a tool needs it.
 
+## As built (phase 5)
+
+- `platform/notify/index.ts` exports `notify.email(message, { tx? })` and
+  `notify.slack(message, { tx? })`, both enqueue jobs (`notify.email`, `notify.slack`,
+  5 attempts, 30 s timeout). `email.ts` and `slack.ts` hold the drivers and
+  `deliverEmail`/`deliverSlack` used by the jobs, plus `setEmailDriver`/`setSlackDriver`
+  for tests. Slack errors in a known permanent set (`channel_not_found`,
+  `not_in_channel`, `invalid_auth`, …) throw `NonRetryableError`.
+- nodemailer is pinned to 6.x (`adr/0002`): the two calls used, `createTransport(url)`
+  and `sendMail`, are unchanged across majors, and 6 is the version the builder knows.
+  The SMTP driver has not been exercised against a real mail server yet; the console
+  driver is what tests and development use.
+- Templates are still inline strings (magic link); a `templates/` module arrives when a
+  second email exists.
+- Magic link and the customer follow-up job go through `notify`, with `{ tx }` so the
+  message is queued only if the surrounding write commits.
+
 ## Done when
 
 - Magic link email goes through the pipeline and appears in the console driver.

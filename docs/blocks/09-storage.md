@@ -51,6 +51,23 @@ interface StorageDriver {
 - `FileField` for forms (single file) and `AttachmentList` for detail pages with
   upload, download and remove.
 
+## As built (phase 5, server)
+
+- `platform/storage/`: `driver.ts` (interface), `disk.ts`, `s3.ts`, `sniff.ts` (magic bytes
+  for PNG, JPEG, GIF, WebP, PDF, ZIP with Office types by extension; text by heuristic;
+  otherwise `application/octet-stream`), `table.ts`, `service.ts` (`storeFile`,
+  `getFileRecord`, `openFile`, `listFilesFor`, `softDeleteFile`, `purgeTrashedFiles`,
+  `serializeFile`, `setStorageDriver` for tests), `routes.ts` (`GET /api/files/:id`),
+  `jobs.ts` (`files.purge_trash` daily at 02:45).
+- There is no standalone upload endpoint. Files are stored by the service that creates
+  the owning record (`storeFile(tx, actor, …)` in the same transaction), which keeps
+  authorization with the entity. The notes feature is the reference.
+- Download permission comes from `entityPermissions[entityType].read` in
+  `src/shared/permissions.ts`; files with no entity need `files:manage`.
+- `filename*` (RFC 5987) is sent alongside a sanitised ASCII `filename`.
+- S3 driver round-tripped once against MinIO (`docker compose --profile s3 up -d minio`).
+  Not yet verified against AWS S3 or R2.
+
 ## Done when
 
 - Notes golden example attaches and downloads a file with both drivers (disk in
