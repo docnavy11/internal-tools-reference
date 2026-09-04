@@ -4,8 +4,8 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phases 1 and 2 implemented** (skeleton; auth, authorization, shell, users
-admin). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+Status: **phases 1 to 3 implemented** (skeleton; auth, authorization, shell, users
+admin; CRUD kit, audit log UI, customers golden example). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
@@ -142,17 +142,20 @@ src/
                                nav.ts (navigation registry), page-header, empty-state,
                                states (loading/not-found/no-access), error-boundary,
                                confirm-dialog, relative-time, user-avatar
-      data-table/              phase 3: DataTable, filter bar, pagination, bulk, export
-      form/                    phase 3: field components bound to react-hook-form
-      api/                     fetch client with error envelope mapping and 401 hook
+      data-table/              DataTable, useListParams (URL state), filter bar, toolbar,
+                               bulk action bar, export, pagination
+      form/                    EntityForm (zod resolver, server field errors) and fields
+      detail/                  DetailPage, FieldList, HistoryTab, audit diff
+      api/                     fetch client with error envelope mapping and 401 hook,
+                               error helpers, user options query
       auth/                    session provider, usePermission, RequireAuth,
                                RequirePermission, login page, redirect validation
       ui/                      shadcn components, copied in by the shadcn CLI
     hooks/                     small shared hooks (use-mobile)
     lib/                       utils (cn)
     features/<name>/
-      list.tsx, detail.tsx, form.tsx, nav.ts
-    pages/                     home, settings/ (layout, users), later audit, jobs, files
+      api.ts, list.tsx, detail.tsx, form.tsx, nav.ts, routes.tsx
+    pages/                     home, settings/ (layout, users, audit), later jobs, files
 drizzle/                       generated SQL migrations, never edited after apply
 tests/
   server/                      Vitest, real Postgres

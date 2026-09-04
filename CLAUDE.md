@@ -4,11 +4,12 @@ Conventions for anyone changing this repository, human or agent.
 
 ## Status
 
-Phases 1 and 2 are implemented: build, env validation, database and migrations, HTTP
+Phases 1 to 3 are implemented: build, env validation, database and migrations, HTTP
 platform, health, APP_MODE switch, Docker, CI; auth (OIDC, magic link, dev login,
-sessions), permissions with the route coverage test, audit log table, users admin
-API and page, UI shell, login page. Phases 3 to 7 in `docs/BUILD_PLAN.md` are not
-started. Update this section as phases land.
+sessions), permissions with the route coverage test, audit log, users admin, UI shell,
+login page; CRUD kit (data table, forms, detail, history), audit page, and the
+`customers` golden example. Phases 4 to 7 in `docs/BUILD_PLAN.md` are not started.
+Update this section as phases land.
 
 ## Read first
 

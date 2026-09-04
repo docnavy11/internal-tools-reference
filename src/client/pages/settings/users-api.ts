@@ -1,46 +1,16 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, apiSend, ApiRequestError } from '@/client/platform/api/client';
 import type { Page } from '@/shared/api-types';
 import type { InviteUserInput, UpdateUserInput, User } from '@/shared/features/users/schema';
-import type { userSortColumns } from '@/shared/features/users/schema';
-import type { Role, UserStatus } from '@/shared/permissions';
 
 // Server state for /api/users. Every mutation invalidates the list; nothing is patched
 // into the cache by hand, so what the table shows is always what the server returned.
 
-export type UserSortColumn = (typeof userSortColumns)[number];
+export const usersKey = ['users'] as const;
+export const usersListKey = [...usersKey, 'list'] as const;
 
-export interface UsersQuery {
-  page: number;
-  pageSize: number;
-  sort: UserSortColumn;
-  order: 'asc' | 'desc';
-  q: string;
-  role: Role | '';
-  status: UserStatus | '';
-}
-
-const usersKey = ['users'] as const;
-
-function toSearchParams(query: UsersQuery): string {
-  const params = new URLSearchParams({
-    page: String(query.page),
-    pageSize: String(query.pageSize),
-    sort: query.sort,
-    order: query.order,
-  });
-  if (query.q) params.set('q', query.q);
-  if (query.role) params.set('role', query.role);
-  if (query.status) params.set('status', query.status);
-  return params.toString();
-}
-
-export function useUsers(query: UsersQuery) {
-  return useQuery({
-    queryKey: [...usersKey, query],
-    queryFn: () => api<Page<User>>(`/api/users?${toSearchParams(query)}`),
-    placeholderData: keepPreviousData,
-  });
+export function fetchUserPage(search: URLSearchParams): Promise<Page<User>> {
+  return api<Page<User>>(`/api/users?${search.toString()}`);
 }
 
 function useUsersMutation<TVariables, TResult>(

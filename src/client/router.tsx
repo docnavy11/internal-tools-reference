@@ -7,6 +7,9 @@ import { NotFoundPage } from '@/client/platform/shell/states';
 import { HomePage } from '@/client/pages/home';
 import { SettingsIndexRedirect, SettingsLayout } from '@/client/pages/settings/layout';
 import { UsersPage } from '@/client/pages/settings/users';
+import { AuditPage } from '@/client/pages/settings/audit';
+// One import line per feature.
+import { customerRoutes } from '@/client/features/customers/routes';
 
 // Every feature adds its routes here with one import line, and its nav entry to
 // `platform/shell/nav.ts`. `handle.title` is what the top-bar breadcrumb shows.
@@ -25,6 +28,7 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <HomePage />, handle: { title: 'Home' } },
+      ...customerRoutes,
       {
         path: 'settings',
         element: <SettingsLayout />,
@@ -39,6 +43,15 @@ export const router = createBrowserRouter([
               </RequirePermission>
             ),
             handle: { title: 'Users' },
+          },
+          {
+            path: 'audit',
+            element: (
+              <RequirePermission permission="audit:read">
+                <AuditPage />
+              </RequirePermission>
+            ),
+            handle: { title: 'Audit log' },
           },
         ],
       },

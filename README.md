@@ -6,7 +6,7 @@ login, roles and permissions, tables and forms with validation, audit history,
 background jobs and schedules, file uploads, email and Slack, settings and feature
 flags, structured logging, and a UI shell.
 
-Status: phases 1 and 2 of 7 implemented (skeleton; auth, permissions, shell, users admin). See `docs/BUILD_PLAN.md`.
+Status: phases 1 to 3 of 7 implemented (skeleton; auth, permissions, shell, users admin; CRUD kit, audit, customers example). See `docs/BUILD_PLAN.md`.
 
 Stack in one line: TypeScript, React with Vite, Hono, Postgres with Drizzle,
 shadcn/ui on Tailwind 4, one Docker image that runs anywhere.

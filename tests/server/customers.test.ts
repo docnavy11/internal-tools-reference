@@ -222,7 +222,10 @@ describe('customers API', () => {
       /attachment; filename="customers-\d{4}-\d{2}-\d{2}\.csv"/,
     );
     const text = await res.text();
-    const lines = text.replace(/^\uFEFF/, '').trim().split('\r\n');
+    const lines = text
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .split('\r\n');
     expect(lines).toHaveLength(3);
     expect(lines[0]).toBe('id,name,email,status,plan,tags,owner,createdAt,updatedAt');
     expect(lines[1]).toContain(",'=cmd(),"); // formula prefix neutralised; sorts first by name

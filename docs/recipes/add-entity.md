@@ -93,17 +93,25 @@ fails if any new route lacks a permission marker.
 
 ## 6. Client
 
-Create `src/client/features/vendors/`:
+Create `src/client/features/vendors/` by copying `src/client/features/customers/`:
 
-- `list.tsx`: `DataTable` with columns, filters from `vendorFilters`, export URL,
-  bulk actions, row link to detail.
-- `detail.tsx`: `DetailPage` with `FieldList`, actions, `HistoryTab`.
-- `form.tsx`: `EntityForm` over `vendorInput` with the field components.
-- `nav.ts`: navigation entry.
-- `routes.tsx`: route objects for `/vendors`, `/vendors/new`, `/vendors/:id`,
-  `/vendors/:id/edit`.
+- `api.ts`: query key, `fetchVendorPage(searchParams)`, `vendorsExportUrl(searchParams)`,
+  `useVendor(id)` and one mutation hook per verb (create, update, delete, restore, bulk),
+  all invalidating the feature's query key.
+- `list.tsx`: `useListParams(vendorFilters, { defaultSort })`, a `ColumnDef[]` whose
+  `id`s match `vendorSortColumns` (those get sort buttons), a `FilterDef[]` declaring
+  the filter bar, bulk actions, then `<DataTable …/>`.
+- `detail.tsx`: `DetailPage` with `FieldList`, tabs Details and History
+  (`HistoryTab` pointed at `/api/vendors/:id/history`), actions edit, delete, restore.
+- `form.tsx`: one `EntityForm` over `vendorInput` with field components from
+  `client/platform/form`, exported as a create page and an edit page.
+- `nav.ts`: exports a named `NavEntry` constant (`vendorsNav`).
+- `routes.tsx`: exports `vendorRoutes: RouteObject[]`, every element wrapped in
+  `RequirePermission`, `handle.title` for breadcrumbs.
 
-Add one import line in `src/client/router.tsx`.
+Register with two lines: spread `vendorRoutes` into the shell's children in
+`src/client/router.tsx`, and add `vendorsNav` to `navEntries` in
+`src/client/platform/shell/nav.ts`.
 
 ## 7. Tests
 
@@ -128,6 +136,7 @@ matching recipe. Run `npm run check` (typecheck, lint, tests). Done.
 - [ ] service.ts with audit on every write
 - [ ] routes.ts with permission on every route, using validate()
 - [ ] server index.ts registered
-- [ ] list, detail, form, nav, routes on the client, registered
+- [ ] api, list, detail, form, nav, routes on the client; two registration lines
+- [ ] Playwright spec copied from `tests/e2e/customers.spec.ts`
 - [ ] tests including audit and permission checks
 - [ ] seed rows

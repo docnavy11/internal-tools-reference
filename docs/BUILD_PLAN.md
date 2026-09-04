@@ -44,9 +44,13 @@ Accept when: sign in with Google works against a real client id; block 01 and 02
 tests pass; Playwright logs in via dev login and reaches the users page as admin and
 is refused as viewer.
 
-## Phase 3: CRUD kit, audit, customers example (large)
+## Phase 3: CRUD kit, audit, customers example (large) — implemented 2026-09-04
 
-Blocks 04, 05, and the `customers` golden example.
+Blocks 04, 05, and the `customers` golden example. As built: server by the lead
+(52 Vitest tests), client kit and pages by an agent against the shared contract
+(16 Playwright tests), users page migrated onto the kit. CSV import moves to phase 4
+with jobs. The "add a throwaway entity by following the recipe" acceptance step has not
+been run yet; do it at the start of phase 4 as the first real use of the recipe.
 
 - `DataTable`, filter bar, `useListParams`, `EntityForm`, field components,
   `DetailPage`, `HistoryTab`, `ConfirmDialog`, `EmptyState`, `StatusBadge`.

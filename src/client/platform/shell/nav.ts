@@ -1,6 +1,8 @@
-import { HomeIcon, UsersIcon, type LucideIcon } from 'lucide-react';
+import { HomeIcon, ScrollTextIcon, UsersIcon, type LucideIcon } from 'lucide-react';
 import { useSession } from '@/client/platform/auth/session';
 import type { Permission } from '@/shared/permissions';
+// One import line per feature that appears in the navigation.
+import { customersNav } from '@/client/features/customers/nav';
 
 // The navigation registry. A feature exports a `nav` object from
 // `client/features/<name>/nav.ts` and is added to `navEntries` with one import line;
@@ -27,6 +29,7 @@ export const navGroupLabels: Record<NavGroup, string> = {
 
 export const navEntries: NavEntry[] = [
   { label: 'Home', icon: HomeIcon, to: '/', group: 'main', order: 10 },
+  customersNav,
   {
     label: 'Users',
     icon: UsersIcon,
@@ -34,6 +37,14 @@ export const navEntries: NavEntry[] = [
     permission: 'users:manage',
     group: 'settings',
     order: 10,
+  },
+  {
+    label: 'Audit log',
+    icon: ScrollTextIcon,
+    to: '/settings/audit',
+    permission: 'audit:read',
+    group: 'settings',
+    order: 20,
   },
 ];
 
