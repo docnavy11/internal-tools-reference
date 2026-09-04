@@ -47,8 +47,10 @@ test.describe.serial('customers', () => {
     await page.goto('/customers');
     await page.getByRole('link', { name: 'New customer' }).click();
     await expect(page).toHaveURL('/customers/new');
+    // Routes are code-split: the previous page stays visible until the form chunk renders.
+    await expect(page.getByRole('button', { name: 'Create customer' })).toBeVisible();
 
-    await page.getByLabel('Name').fill(name);
+    await page.getByLabel('Name', { exact: true }).fill(name);
     await page.getByLabel('Email').fill('billing@acme.test');
     await page.getByLabel('Tags').fill('vip');
     await page.getByLabel('Tags').press('Enter');
@@ -77,9 +79,10 @@ test.describe.serial('customers', () => {
 
     await page.goto(`/customers/${customer.id}`);
     await page.getByRole('link', { name: 'Edit' }).click();
+    await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
     await expect(page).toHaveURL(`/customers/${customer.id}/edit`);
 
-    await page.getByLabel('Name').fill(`${name} Holdings`);
+    await page.getByLabel('Name', { exact: true }).fill(`${name} Holdings`);
     await page.getByRole('button', { name: 'Save changes' }).click();
 
     await expect(page).toHaveURL(`/customers/${customer.id}`);
@@ -195,7 +198,8 @@ test.describe.serial('customers', () => {
     await expect(page.getByRole('link', { name: 'New customer' })).toBeVisible();
 
     await page.goto('/customers/new');
-    await page.getByLabel('Name').fill(name);
+    await expect(page.getByRole('button', { name: 'Create customer' })).toBeVisible();
+    await page.getByLabel('Name', { exact: true }).fill(name);
     await page.getByRole('button', { name: 'Create customer' }).click();
     await expect(page).toHaveURL(/\/customers\/[0-9a-f-]{36}$/);
 

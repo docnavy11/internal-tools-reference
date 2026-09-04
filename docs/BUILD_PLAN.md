@@ -117,9 +117,14 @@ by `customers.slack_on_create`; the purge threshold by `customers.trash_days`.
 Accept when: block 07 and 10 tests pass; a signed webhook lands, is processed, and
 shows in the admin page; a duplicate is ignored.
 
-## Phase 7: hardening and handover (medium)
+## Phase 7: hardening and handover (medium) — implemented 2026-09-04
 
-Block 11 completion, security pass, docs.
+Block 11 completion, security pass, docs. As built: security headers, error reporter
+with optional Sentry, client error endpoint and reporter, hardening tests, CI job running
+the e2e suite against the Docker image, separate e2e database; an independent security
+review (nine findings, all fixed, `SECURITY.md`, `adr/0014`); command palette, route
+code splitting, polish; `start-a-tool.md` and the README handover section.
+Final state: 116 Vitest tests, 31 Playwright tests.
 
 - Security headers, rate limiting, redaction review, client error reporting,
   Sentry driver file.
@@ -134,7 +139,8 @@ Block 11 completion, security pass, docs.
   changed from "design" to "implemented".
 
 Accept when: a fresh clone reaches a running, seeded app by following only the
-README; every block's "done when" list is checked.
+README; every block's "done when" list is checked. Items still open after phase 7 are
+listed in `SECURITY.md` under "Not verified" (real OIDC tenant, SMTP, AWS/R2).
 
 ## Working rules during the build
 

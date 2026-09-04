@@ -1,25 +1,47 @@
+import { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router';
-import { LoginPage } from '@/client/platform/auth/login-page';
 import { RequireAuth, RequirePermission } from '@/client/platform/auth/require-auth';
 import { AppShell } from '@/client/platform/shell/app-shell';
 import { RouteErrorBoundary } from '@/client/platform/shell/error-boundary';
-import { NotFoundPage } from '@/client/platform/shell/states';
-import { HomePage } from '@/client/pages/home';
-import { SettingsIndexRedirect, SettingsLayout } from '@/client/pages/settings/layout';
-import { UsersPage } from '@/client/pages/settings/users';
-import { AuditPage } from '@/client/pages/settings/audit';
-import { JobsPage } from '@/client/pages/settings/jobs';
-import { SettingsGeneralPage } from '@/client/pages/settings/general';
-import { WebhooksPage } from '@/client/pages/settings/webhooks';
+import { lazyPage } from '@/client/platform/shell/lazy-page';
+import { LoadingPage, NotFoundPage } from '@/client/platform/shell/states';
 // One import line per feature.
 import { customerRoutes } from '@/client/features/customers/routes';
 
-// Every feature adds its routes here with one import line, and its nav entry to
-// `platform/shell/nav.ts`. `handle.title` is what the top-bar breadcrumb shows.
+/**
+ * Every page is a lazy chunk so the first load is the shell, the session and the router
+ * rather than the whole application. `AppShell` renders the `Suspense` boundary the
+ * authenticated pages fall back to; the login page carries its own, because it is
+ * outside the shell.
+ *
+ * Every feature adds its routes here with one import line, and its nav entry to
+ * `platform/shell/nav.ts`. `handle.title` is what the top-bar breadcrumb shows.
+ */
+
+const LoginPage = lazyPage(() => import('@/client/platform/auth/login-page'), 'LoginPage');
+const HomePage = lazyPage(() => import('@/client/pages/home'), 'HomePage');
+const SettingsLayout = lazyPage(() => import('@/client/pages/settings/layout'), 'SettingsLayout');
+const SettingsIndexRedirect = lazyPage(
+  () => import('@/client/pages/settings/layout'),
+  'SettingsIndexRedirect',
+);
+const SettingsGeneralPage = lazyPage(
+  () => import('@/client/pages/settings/general'),
+  'SettingsGeneralPage',
+);
+const UsersPage = lazyPage(() => import('@/client/pages/settings/users'), 'UsersPage');
+const AuditPage = lazyPage(() => import('@/client/pages/settings/audit'), 'AuditPage');
+const JobsPage = lazyPage(() => import('@/client/pages/settings/jobs'), 'JobsPage');
+const WebhooksPage = lazyPage(() => import('@/client/pages/settings/webhooks'), 'WebhooksPage');
+
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <Suspense fallback={<LoadingPage />}>
+        <LoginPage />
+      </Suspense>
+    ),
     errorElement: <RouteErrorBoundary />,
   },
   {

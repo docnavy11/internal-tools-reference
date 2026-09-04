@@ -69,13 +69,12 @@ export function SchedulesTab({ onRan }: { onRan: () => void }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border">
+    <div className="rounded-xl border">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Schedule</TableHead>
-            <TableHead>Job</TableHead>
             <TableHead>Last run</TableHead>
             <TableHead>Next run</TableHead>
             <TableHead>Enabled</TableHead>
@@ -121,18 +120,33 @@ function ScheduleRow({ schedule, onRan }: { schedule: Schedule; onRan: () => voi
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{schedule.name}</TableCell>
+      {/* The job name sits under the schedule name rather than in a column of its own:
+          the two are nearly the same string, and the column it saves is what kept
+          "Run now" off the right edge at 1280. The description is the only free text
+          here, so it is what truncates when the window gets narrower still. */}
       <TableCell>
         <div className="space-y-0.5">
-          <div className="font-mono text-xs">{schedule.cron}</div>
-          <div className="text-muted-foreground text-xs">{schedule.description}</div>
+          <div className="font-medium">{schedule.name}</div>
+          <div className="text-muted-foreground font-mono text-xs" data-testid="schedule-job">
+            {schedule.jobName}
+          </div>
         </div>
       </TableCell>
-      <TableCell className="font-mono text-xs">{schedule.jobName}</TableCell>
       <TableCell>
+        <div className="space-y-0.5">
+          <div className="font-mono text-xs whitespace-nowrap">{schedule.cron}</div>
+          <div
+            className="text-muted-foreground max-w-56 truncate text-xs"
+            title={schedule.description}
+          >
+            {schedule.description}
+          </div>
+        </div>
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
         <RelativeTime value={schedule.lastRunAt} fallback="Never" />
       </TableCell>
-      <TableCell>
+      <TableCell className="whitespace-nowrap">
         {schedule.enabled ? (
           <RelativeTime value={schedule.nextRunAt} />
         ) : (
@@ -147,7 +161,7 @@ function ScheduleRow({ schedule, onRan }: { schedule: Schedule; onRan: () => voi
           onCheckedChange={(checked) => void toggle(checked)}
         />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right whitespace-nowrap">
         <Button
           variant="outline"
           size="sm"

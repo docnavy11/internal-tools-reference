@@ -1,6 +1,7 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, type ErrorInfo, type ReactNode } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router';
 import { ApiRequestError } from '@/client/platform/api/client';
+import { reportClientError } from '@/client/platform/api/report-client-error';
 import { Button } from '@/client/platform/ui/button';
 import { NotFoundPage } from '@/client/platform/shell/states';
 
@@ -46,7 +47,14 @@ function ErrorPanel({ error, onRetry }: { error: unknown; onRetry?: () => void }
 /** Route-level boundary: used as `errorElement` so a thrown error keeps the shell usable. */
 export function RouteErrorBoundary() {
   const error = useRouteError();
-  if (isRouteErrorResponse(error) && error.status === 404) return <NotFoundPage />;
+  // A 404 is a page that does not exist, not a failure; everything else is reported.
+  const notFound = isRouteErrorResponse(error) && error.status === 404;
+
+  useEffect(() => {
+    if (!notFound) reportClientError(error);
+  }, [error, notFound]);
+
+  if (notFound) return <NotFoundPage />;
   return <ErrorPanel error={error} />;
 }
 
@@ -68,6 +76,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, { error: unknow
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Unhandled render error', error, info.componentStack);
+    reportClientError(error);
   }
 
   reset = () => this.setState({ error: null });

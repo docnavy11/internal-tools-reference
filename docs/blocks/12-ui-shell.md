@@ -60,7 +60,21 @@ search over its records (`GET /api/<plural>?q=&pageSize=5`). Keyboard shortcut
 - Two shadcn files were rewritten and will be reverted by `shadcn add --overwrite`:
   `ui/sonner.tsx` reads the shell's theme context instead of `next-themes`, and
   `hooks/use-mobile.ts` uses `useSyncExternalStore` to satisfy the react-hooks lint rule.
-- Command palette not built (optional, phase 7).
+- Command palette (phase 7): `platform/shell/command-palette.tsx` with a registry
+  (`palette-registry.ts`); `Ctrl/Cmd+K` or the top-bar button; lists permitted navigation
+  entries and, from two characters, results from registered sources. A feature adds
+  `features/<name>/palette.ts` calling `registerPaletteSource({ label, permission, search })`
+  and one import line in `command-palette.tsx`. Built on Dialog and a roving-focus list; no
+  `cmdk`.
+- Code splitting (phase 7): pages are wrapped with `lazyPage(() => import(...), 'Export')`
+  from `platform/shell/lazy-page.ts`; `AppShell`, `SettingsLayout` and the login route hold
+  `Suspense` boundaries with `LoadingPage`. Main chunk 547 kB (176 kB gzip), the rest per
+  route. The remaining main-chunk weight is react-dom, react-router, TanStack Query, the
+  shell's Radix primitives and sonner, all needed before any route resolves. Because
+  navigations are transitions, the previous page stays visible while a chunk loads;
+  end-to-end tests wait for an element of the new page before interacting.
+- Client errors: `platform/api/report-client-error.ts` posts uncaught errors, unhandled
+  rejections and route-boundary errors to `/api/client-errors`, deduplicated for 10 s.
 
 ## Done when
 

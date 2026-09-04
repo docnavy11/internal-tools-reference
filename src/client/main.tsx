@@ -2,12 +2,17 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router';
+import { installGlobalErrorReporting } from './platform/api/report-client-error';
 import { SessionProvider } from './platform/auth/session';
 import { ThemeProvider } from './platform/shell/theme';
 import { Toaster } from './platform/ui/sonner';
 import { TooltipProvider } from './platform/ui/tooltip';
 import { router } from './router';
 import './index.css';
+
+// Errors thrown outside React (event handlers, timers, unawaited promises) reach the
+// server log through this listener pair; React render errors go through the boundaries.
+installGlobalErrorReporting();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 10_000, refetchOnWindowFocus: false } },

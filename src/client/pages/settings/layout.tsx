@@ -1,6 +1,7 @@
+import { Suspense } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 import { isNavEntryActive, useNavEntries } from '@/client/platform/shell/nav';
-import { NoAccessPage } from '@/client/platform/shell/states';
+import { LoadingPage, NoAccessPage } from '@/client/platform/shell/states';
 import { cn } from '@/client/lib/utils';
 
 // The settings area: its own sub-navigation, built from the `settings` nav group so a
@@ -33,7 +34,10 @@ export function SettingsLayout() {
         </nav>
       ) : null}
       <div className="min-w-0 flex-1">
-        <Outlet />
+        {/* Its own boundary, so moving between settings pages keeps this nav on screen. */}
+        <Suspense fallback={<LoadingPage />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   );

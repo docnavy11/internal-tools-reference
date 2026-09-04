@@ -151,7 +151,11 @@ Create `src/client/features/vendors/` by copying `src/client/features/customers/
   `client/platform/form`, exported as a create page and an edit page.
 - `nav.ts`: exports a named `NavEntry` constant (`vendorsNav`).
 - `routes.tsx`: exports `vendorRoutes: RouteObject[]`, every element wrapped in
-  `RequirePermission`, `handle.title` for breadcrumbs.
+  `RequirePermission`, `handle.title` for breadcrumbs, page components loaded with
+  `lazyPage(() => import('./list'), 'VendorsListPage')` so each route is its own chunk.
+- `palette.ts` (optional): `registerPaletteSource({ label, permission, search })` so the
+  command palette finds vendors by name; one import line in
+  `platform/shell/command-palette.tsx`.
 
 Register with two lines: spread `vendorRoutes` into the shell's children in
 `src/client/router.tsx`, and add `vendorsNav` to `navEntries` in

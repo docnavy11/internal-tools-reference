@@ -295,7 +295,8 @@ function FilterControl<K extends string>({
             <SelectValue placeholder={filter.label} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All {filter.label.toLowerCase()}</SelectItem>
+            {/* "Any action", "Any vendor": grammatical whatever the filter is called. */}
+            <SelectItem value="all">Any {filter.label.toLowerCase()}</SelectItem>
             {filter.options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}

@@ -1,4 +1,5 @@
 import { cn } from '@/client/lib/utils';
+import { Badge } from '@/client/platform/ui/badge';
 
 /**
  * The diff shown on the audit page and in a record's history tab. Audit snapshots are
@@ -48,10 +49,35 @@ export function diffRecords(before: unknown, after: unknown): FieldChange[] {
   return changes;
 }
 
-/** Nested objects and arrays are shown as JSON; there is no useful table for them. */
+/** True for the common case worth showing as chips: a short list of scalars, like tags. */
+function isChipList(value: unknown): value is (string | number | boolean)[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= 8 &&
+    value.every((entry) => ['string', 'number', 'boolean'].includes(typeof entry))
+  );
+}
+
+/**
+ * Scalars render as text and short scalar arrays as chips, so a tag change reads as a
+ * before and after rather than two JSON blocks. Anything else falls back to JSON: there
+ * is no useful table for an arbitrary nested object.
+ */
 export function DiffValue({ value }: { value: unknown }) {
   if (value === null || value === undefined)
     return <span className="text-muted-foreground">—</span>;
+  if (isChipList(value)) {
+    if (value.length === 0) return <span className="text-muted-foreground">empty</span>;
+    return (
+      <span className="flex flex-wrap gap-1">
+        {value.map((entry, index) => (
+          <Badge key={`${String(entry)}-${index}`} variant="secondary" className="font-normal">
+            {String(entry)}
+          </Badge>
+        ))}
+      </span>
+    );
+  }
   if (typeof value === 'object') {
     return (
       <pre className="bg-muted/60 max-w-full overflow-x-auto rounded-md p-2 text-xs">

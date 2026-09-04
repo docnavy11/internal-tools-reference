@@ -130,8 +130,18 @@ test.describe.serial('jobs and import', () => {
     await expect(rows.first()).toBeVisible({ timeout: JOB_WAIT });
 
     const first = rows.first();
-    const jobName = (await first.locator('td').nth(2).innerText()).trim();
+    const jobName = (await first.getByTestId('schedule-job').innerText()).trim();
     const toggle = first.getByRole('switch');
+
+    // "Run now" used to be pushed off the right edge at the default 1280 viewport.
+    const runNow = first.getByRole('button', { name: /^Run .* now$/ });
+    const box = (await runNow.boundingBox())!;
+    const viewport = page.viewportSize()!;
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
 
     // Every spec file shares one database, so start from a known state rather than
     // assuming a previous run left this schedule enabled.
@@ -150,7 +160,7 @@ test.describe.serial('jobs and import', () => {
     await expect(page.getByText('is now enabled').first()).toBeVisible();
 
     // "Run now" queues the schedule's job and sends the user to the Jobs tab.
-    await first.getByRole('button', { name: /^Run .* now$/ }).click();
+    await runNow.click();
     await expect(page).toHaveURL('/settings/jobs');
 
     await page.goto(`/settings/jobs?name=${encodeURIComponent(jobName)}`);

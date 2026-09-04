@@ -4,10 +4,9 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phases 1 to 6 implemented, phase 7 (hardening) in progress** (skeleton;
-auth, authorization, shell, users admin; CRUD kit, audit log UI, customers golden
-example; job queue, scheduler, jobs admin, CSV import; storage, notifications, notes
-child entity; settings, integrations with webhook inbox). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+Status: **all seven phases implemented** (2026-09-04). What remains unverified outside
+this repository is listed in `SECURITY.md`. Where this document and the code disagree,
+the code was checked more recently; fix the document. See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals

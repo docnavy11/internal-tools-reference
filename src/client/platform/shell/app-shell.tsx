@@ -1,6 +1,9 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router';
 import { AppSidebar } from '@/client/platform/shell/app-sidebar';
 import { RouteBreadcrumb } from '@/client/platform/shell/breadcrumbs';
+import { CommandPalette } from '@/client/platform/shell/command-palette';
+import { LoadingPage } from '@/client/platform/shell/states';
 import { ThemeToggle } from '@/client/platform/shell/theme';
 import { UserMenu } from '@/client/platform/shell/user-menu';
 import { Separator } from '@/client/platform/ui/separator';
@@ -18,12 +21,16 @@ export function AppShell() {
           <div className="min-w-0 flex-1 overflow-hidden">
             <RouteBreadcrumb />
           </div>
+          <CommandPalette />
           <ThemeToggle />
           <UserMenu />
         </header>
         <div className="min-w-0 flex-1 p-4 md:p-6">
           <div className="mx-auto w-full max-w-6xl">
-            <Outlet />
+            {/* Every page below is a lazy route chunk; this is where they load. */}
+            <Suspense fallback={<LoadingPage />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </SidebarInset>

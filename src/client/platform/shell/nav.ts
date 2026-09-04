@@ -90,6 +90,14 @@ export function useNavEntries(group: NavGroup): NavEntry[] {
     .sort((a, b) => a.order - b.order);
 }
 
+/** Every entry the user may see, across groups, in sidebar order. For the palette. */
+export function useVisibleNavEntries(): NavEntry[] {
+  const { permissions } = useSession();
+  return navEntries
+    .filter((entry) => !entry.permission || permissions.includes(entry.permission))
+    .sort((a, b) => navGroups.indexOf(a.group) - navGroups.indexOf(b.group) || a.order - b.order);
+}
+
 /** True when `pathname` is inside the section an entry points at. */
 export function isNavEntryActive(entry: NavEntry, pathname: string): boolean {
   if (entry.to === '/') return pathname === '/';
