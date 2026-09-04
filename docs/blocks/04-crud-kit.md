@@ -41,15 +41,17 @@ columns declared in `service.ts`.
 - Renders: toolbar (search box, filter bar, export button, column visibility),
   table with sort headers and row selection, pagination footer, bulk action bar
   when rows are selected, empty state, loading skeleton, error state with retry.
-- Filter bar controls are chosen by Zod type: enum becomes a multi-select, boolean a
-  toggle, date a range picker, string a text input. Declared once in `list.tsx`.
+- Filter bar controls are declared explicitly as a `FilterDef[]` in `list.tsx` (text,
+  select, multi-select, user, boolean, date-range). The Zod filter schema supplies the
+  key names and validates on the server; it does not drive the UI.
 
 `EntityForm<TInput>`
 - Wraps react-hook-form with the Zod resolver, maps server 400 `details` back onto
   fields, disables submit while pending, shows a toast on success.
 - Field components in `client/platform/form/`: `TextField`, `TextareaField`,
-  `SelectField`, `MultiSelectField`, `CheckboxField`, `DateField`, `NumberField`,
-  `UserPickerField`, `FileField`. Each takes `name` and `label` and binds itself.
+  `SelectField`, `TagsField`, `CheckboxField`, `NumberField`, `UserPickerField`. Each
+  takes `name` and `label` and binds itself through the form context. `FileField`
+  arrives with storage in phase 5; a date field is added when an entity needs one.
 
 `DetailPage`
 - `PageHeader` with title, status badge, actions menu (edit, delete, custom).
@@ -57,7 +59,9 @@ columns declared in `service.ts`.
 - `Tabs` with a `HistoryTab` that renders `/history` as a timeline with before and
   after diffs.
 
-`ConfirmDialog`, `EmptyState`, `PageHeader`, `StatusBadge` shared in `client/platform/ui/`.
+`ConfirmDialog`, `EmptyState`, `PageHeader` live in `client/platform/shell/`; status badges
+are per entity (see `CustomerStatusBadge` in the customers list). `client/platform/ui/`
+holds only shadcn output.
 
 ## As built (phase 3, server)
 
