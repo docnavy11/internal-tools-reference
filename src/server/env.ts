@@ -24,7 +24,6 @@ export const envSchema = z
     LOG_LEVEL: z
       .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
       .default('info'),
-    SESSION_SECRET: z.string().min(32, 'must be at least 32 characters'),
 
     DATABASE_URL: z.string().min(1),
     DATABASE_URL_TEST: optionalString(),

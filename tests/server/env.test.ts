@@ -3,18 +3,17 @@ import { parseEnv } from '../../src/server/env';
 
 const valid = {
   APP_URL: 'http://localhost:3000',
-  SESSION_SECRET: 'x'.repeat(32),
   DATABASE_URL: 'postgres://a:b@localhost/app',
 };
 
 describe('env', () => {
   it('reports every missing or invalid variable by name', () => {
-    const result = parseEnv({ SESSION_SECRET: 'short' });
+    const result = parseEnv({ LOG_LEVEL: 'loud' });
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.problems.some((p) => p.startsWith('APP_URL:'))).toBe(true);
     expect(result.problems.some((p) => p.startsWith('DATABASE_URL:'))).toBe(true);
-    expect(result.problems.some((p) => p.startsWith('SESSION_SECRET:'))).toBe(true);
+    expect(result.problems.some((p) => p.startsWith('LOG_LEVEL:'))).toBe(true);
   });
 
   it('applies defaults and parses booleans and numbers', () => {

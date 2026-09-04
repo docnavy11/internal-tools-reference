@@ -47,8 +47,10 @@ SSO, notifications and storage from `docs/CONFIG.md`, deploy the one image.
 ## What has and has not been verified
 
 Verified in this repository: every block's unit and API tests against Postgres, the
-Playwright suite against the built server and (in CI) against the Docker image, the S3
-storage driver against MinIO, the queue's claim exclusivity under concurrent workers.
+Playwright suite against the built server and (in CI) against the Docker image, the
+queue's claim exclusivity and scheduler under concurrent workers. The S3 storage driver
+was round-tripped against MinIO by hand once; there is no automated test for it.
+`docs/ACCEPTANCE.md` lists, per block, what has evidence and what does not.
 
 Not yet verified anywhere: sign-in against a real Google or Microsoft tenant (tests use a
 fake OpenID Connect provider with locally signed tokens), the SMTP driver against a real
@@ -64,4 +66,5 @@ deployment before inviting users.
 - `docs/adr/`: why things are the way they are.
 - `docs/CONFIG.md`: every environment variable.
 - `docs/SECURITY.md`: security invariants, the review findings, what is not verified.
+- `docs/ACCEPTANCE.md`: per block, what has a test, what was checked by hand, what is not verified.
 - `CLAUDE.md`: the rule book for changing the repo.

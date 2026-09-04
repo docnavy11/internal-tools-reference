@@ -55,13 +55,14 @@ at build time and recorded in `package.json`.
 | Tables | TanStack Table | 8.x | Headless; rendered with shadcn table primitives. |
 | Forms | react-hook-form + `@hookform/resolvers/zod` | 7.x | |
 | UI | shadcn/ui on Tailwind CSS | shadcn CLI 4, Tailwind 4 | Components are copied into `src/client/platform/ui`. The CLI installs the unified `radix-ui` package, `class-variance-authority`, `lucide-react`, `tw-animate-css` and the Geist font. See `adr/0009`. |
+| Class names | cn | 0.2.x | Installed by the shadcn CLI; every component uses it to merge Tailwind classes. |
 | Toasts | sonner | 2.x | Installed by the shadcn CLI; `ui/sonner.tsx` is rewired to the shell's own theme context so `next-themes` is not needed. |
 | Logging | pino | 9.x | JSON to stdout. |
 | Email | nodemailer over SMTP | 10.x | Works with any provider that offers SMTP. See block 08 for why not 6. |
 | Slack | plain `fetch` to `chat.postMessage` | n/a | No SDK. |
 | Storage | `@aws-sdk/client-s3` + local disk driver | 3.x | S3-compatible: AWS, R2, MinIO. |
 | CSV | papaparse | 5.x | Import parsing and export. |
-| Dates | date-fns | 3.x/4.x | Plus native `Intl` for display. |
+| Dates | native `Intl` | | Relative and absolute times are formatted with `Intl`; no date library. |
 | Tests | Vitest, Playwright | current | Real Postgres in tests, no DB mocks. |
 | Lint/format | ESLint flat config + Prettier | 9.x | |
 | Container | Docker multi-stage, `node:22-alpine` | | |
@@ -220,7 +221,7 @@ Server
 
 - Routes do three things: validate, authorize, call the service. No business logic.
 - Services own all reads and writes for their entity. Every write runs inside a
-  transaction and calls `audit.record()` in the same transaction.
+  transaction and calls `recordAudit()` in the same transaction.
 - Anything that calls the network (email, Slack, vendor APIs) runs in a job unless it
   is a read the user is waiting for.
 - Errors thrown are `AppError(code, status, message, details?)`. The error handler
@@ -242,7 +243,7 @@ Client
    `APP_URL`. Cookies are `SameSite=Lax`, so this is defence in depth.
 4. Route: `requireAuth()`, `requirePermission('customers:write')`, Zod validation of
    params, query and body.
-5. Service: transaction, write, `audit.record()`, optional `jobs.enqueue()`.
+5. Service: transaction, write, `recordAudit()`, optional `jobs.enqueue()`.
 6. Response: JSON. Lists use `{ items, total, page, pageSize }`. Errors use
    `{ error: { code, message, details?, requestId } }`.
 7. Access log line with method, path, status, duration, user id, request id.

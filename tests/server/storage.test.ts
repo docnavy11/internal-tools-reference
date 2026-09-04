@@ -184,8 +184,17 @@ describe('file storage', () => {
       .update(files)
       .set({ deletedAt: new Date(Date.now() - 40 * 24 * 3600_000) })
       .where(eq(files.id, record.id));
+    const { row } = {
+      row: (await getDb().select().from(files).where(eq(files.id, record.id)))[0]!,
+    };
     expect(await purgeTrashedFiles(30, { type: 'system' })).toBe(1);
     expect(await getDb().select().from(files).where(eq(files.id, record.id))).toHaveLength(0);
+    // The bytes are gone too, not only the row.
+    const { storage } = await import('../../src/server/platform/storage/service');
+    const stream = await storage().get(row.storageKey);
+    await expect(
+      new Promise((_, reject) => stream.on('error', reject).on('data', () => undefined)),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
     expect(await auditRows('files.purge', record.id)).toHaveLength(1);
   });
 });

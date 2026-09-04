@@ -73,7 +73,11 @@ export type { BulkResult };
 
 Add permission strings `vendors:read`, `vendors:write`, `vendors:delete` to
 `src/shared/permissions.ts` and assign them to roles. The default split used by
-customers is: admin everything, member read and write, viewer read.
+customers is: admin everything, member read and write, viewer read. Also add
+`vendor: { read: 'vendors:read', write: 'vendors:write' }` to `entityPermissions` in the
+same file: file downloads and other cross-cutting code look the entity type up there,
+and a missing entry fails closed (nobody without `files:manage` can download a vendor's
+attachments).
 
 ## 2. Table and migration
 
@@ -138,7 +142,9 @@ with a `csvColumns` list, `POST /bulk` (delete action checks the delete permissi
 
 Create `index.ts` exporting `registerVendors(api)` that does `api.route('/', vendorRoutes())`
 and add one line to `src/server/features/index.ts`. The authorization coverage test
-fails if any new route lacks a permission marker.
+fails if any new route lacks an authorization marker (`requireAuth`, `requirePermission`
+or `publicRoute`), or carries `publicRoute` outside the sign-in, client-error and
+webhook paths.
 
 ## 6. Client
 

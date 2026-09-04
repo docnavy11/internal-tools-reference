@@ -2,7 +2,11 @@ import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { notify } from '../../src/server/platform/notify';
 import { setEmailDriver, type EmailMessage } from '../../src/server/platform/notify/email';
-import { setSlackDriver, type SlackMessage } from '../../src/server/platform/notify/slack';
+import {
+  botDriver,
+  setSlackDriver,
+  type SlackMessage,
+} from '../../src/server/platform/notify/slack';
 import { NonRetryableError } from '../../src/server/platform/jobs/define';
 import { jobs } from '../../src/server/platform/jobs/table';
 import { getDb } from '../../src/server/platform/db/client';
@@ -63,5 +67,21 @@ describe('notifications', () => {
 
   it('rejects malformed messages before queueing', async () => {
     await expect(notify.email({ to: 'not-an-email', subject: 'x', text: 'y' })).rejects.toThrow();
+  });
+});
+
+describe('slack bot driver', () => {
+  const reply = (body: unknown) => (async () => Response.json(body)) as unknown as typeof fetch;
+  it('treats ok:false as retryable unless the error is permanent', async () => {
+    await expect(
+      botDriver(reply({ ok: false, error: 'ratelimited' })).post({ text: 'x' }),
+    ).rejects.toThrow(/ratelimited/);
+    await expect(
+      botDriver(reply({ ok: false, error: 'ratelimited' })).post({ text: 'x' }),
+    ).rejects.not.toBeInstanceOf(NonRetryableError);
+    await expect(
+      botDriver(reply({ ok: false, error: 'channel_not_found' })).post({ text: 'x' }),
+    ).rejects.toBeInstanceOf(NonRetryableError);
+    await expect(botDriver(reply({ ok: true })).post({ text: 'x' })).resolves.toBeUndefined();
   });
 });

@@ -28,7 +28,7 @@ the tool built from the template evolves.
   `src/client/features`, with the fixed file names from `adr/0010`. Do not put
   feature code in `platform/`.
 - Every write goes through a service, inside `withTransaction`, and calls
-  `audit.record()` in that transaction. No writes from routes or jobs directly.
+  `recordAudit()` in that transaction. No writes from routes or jobs directly.
 - Every route under `/api` has `requireAuth()`, `requirePermission()` or `publicRoute()`;
   `tests/server/authz-coverage.test.ts` enforces it.
 - Request bodies, params and queries are validated with `validate()` from

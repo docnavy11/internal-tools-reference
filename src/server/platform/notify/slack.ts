@@ -32,10 +32,10 @@ const nonRetryable = new Set([
   'msg_too_long',
 ]);
 
-function botDriver(): SlackDriver {
+export function botDriver(fetchImpl: typeof fetch = (...args) => fetch(...args)): SlackDriver {
   return {
     async post(message) {
-      const res = await fetch('https://slack.com/api/chat.postMessage', {
+      const res = await fetchImpl('https://slack.com/api/chat.postMessage', {
         method: 'POST',
         headers: {
           authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,

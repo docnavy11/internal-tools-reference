@@ -28,7 +28,6 @@ services:
       APP_MODE: all
       PORT: '3000'
       LOG_LEVEL: info
-      SESSION_SECRET: ${SESSION_SECRET:-compose-default-secret-change-me-in-production-please}
       DATABASE_URL: postgres://app:app@postgres:5432/app
       MIGRATE_ON_START: 'true'
       STORAGE_DRIVER: disk

@@ -23,7 +23,7 @@ decision; a disabled-by-default scheduled job can prune rows older than
 
 ## Server
 
-- `audit.record(tx, ctx, { action, entityType, entityId, before, after, metadata })`
+- `recordAudit(tx, ctx, { action, entityType, entityId, before, after, metadata })`
   takes the transaction handle so it commits with the change.
 - `ctx` carries the actor. Requests build it from the session; jobs build a
   `{ actorType: 'job', jobId }` context; scripts use `system`.

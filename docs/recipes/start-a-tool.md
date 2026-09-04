@@ -10,7 +10,9 @@
    - remove `src/shared/features/customers`, `src/server/features/customers`,
      `src/client/features/customers`, and the same three for `notes`;
    - remove their lines from `src/server/features/index.ts`, `src/server/platform/db/schema.ts`,
-     `src/client/router.tsx`, `src/client/platform/shell/nav.ts`, `src/shared/permissions.ts`
+     `src/client/router.tsx`, `src/client/platform/shell/nav.ts`,
+     `src/client/platform/shell/command-palette.tsx` (the palette source import),
+     `src/shared/permissions.ts`
      (permission strings and `entityPermissions` entries), `src/server/platform/db/seed.ts`;
    - remove `tests/server/customers.test.ts`, `notes.test.ts`, the customers parts of
      `jobs.test.ts` and `settings.test.ts`, and `tests/e2e/customers.spec.ts`,
@@ -38,8 +40,8 @@
    that is backed up. Anything else: `STORAGE_DRIVER=s3` with a bucket.
 
 7. Deploy. One image (`Dockerfile`), env vars from `docs/CONFIG.md`, `APP_MODE=all` on a
-   single server or `web` plus `worker` as two services, `MIGRATE_ON_START=true` on the
-   web service. Back up Postgres nightly. Point `SENTRY_DSN` at a project and
+   single server or `web` plus `worker` as two services, `MIGRATE_ON_START=true` on one
+   service (any mode may migrate; an advisory lock serialises replicas). Back up Postgres nightly. Point `SENTRY_DSN` at a project and
    `npm install @sentry/node` if you want error tracking.
 
 8. Hand over. Keep `CLAUDE.md` and `docs/` current as you change things; they are what

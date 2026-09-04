@@ -166,7 +166,6 @@ describe('env refinements from the security review', () => {
   it('production refuses magic links without a real email driver; multi-tenant Microsoft needs an allowlist', () => {
     const base = {
       APP_URL: 'https://x.test',
-      SESSION_SECRET: 'x'.repeat(32),
       DATABASE_URL: 'postgres://a:b@h/d',
       NODE_ENV: 'production',
     };
