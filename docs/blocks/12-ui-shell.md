@@ -37,9 +37,9 @@ enum to colour), `UserAvatar`, `RelativeTime` (with absolute time in a tooltip),
 
 ## Command palette
 
-`cmdk` through shadcn. Lists navigation entries and, per feature that opts in, a
-search over its records (`GET /api/<plural>?q=&pageSize=5`). Keyboard shortcut
-`Ctrl/Cmd+K`. Optional polish, last in the build order.
+Built on the Dialog primitive with a roving-focus list (no `cmdk`). Lists navigation
+entries and, per feature that registers a source, a search over its records
+(`GET /api/<plural>?q=&pageSize=5`). Keyboard shortcut `Ctrl/Cmd+K`. See "As built".
 
 ## Accessibility and behaviour
 
@@ -75,6 +75,8 @@ search over its records (`GET /api/<plural>?q=&pageSize=5`). Keyboard shortcut
   end-to-end tests wait for an element of the new page before interacting.
 - Client errors: `platform/api/report-client-error.ts` posts uncaught errors, unhandled
   rejections and route-boundary errors to `/api/client-errors`, deduplicated for 10 s.
+  Verified by hand during phase 7; there is no permanent end-to-end test for it (the
+  server endpoint is covered by `tests/server/hardening.test.ts`).
 
 ## Done when
 
