@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/server/app';
 import { env } from '../../src/server/env';
 import { setEmailDriver, type EmailMessage } from '../../src/server/platform/notify/email';
-import { cookieFrom, expectAudited, json, signInAs } from './helpers';
+import { cookieFrom, drainJobs, expectAudited, json, signInAs } from './helpers';
 
 const app = createApp();
 const origin = new URL(env.APP_URL).origin;
@@ -110,6 +110,7 @@ describe('magic link routes', () => {
       json({ email: 'first@example.com' }),
     );
     expect(res.status).toBe(200);
+    await drainJobs();
     expect(sent).toHaveLength(1);
 
     const token = new URL(/https?:\/\/\S+/.exec(sent[0]!.text)![0]).searchParams.get('token')!;
@@ -127,6 +128,7 @@ describe('magic link routes', () => {
       json({ email: 'nobody@elsewhere.com' }),
     );
     expect(stranger.status).toBe(200);
+    await drainJobs();
     expect(sent).toHaveLength(1);
   });
 });

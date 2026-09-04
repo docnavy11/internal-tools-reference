@@ -31,12 +31,30 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:-compose-default-secret-change-me-in-production-please}
       DATABASE_URL: postgres://app:app@postgres:5432/app
       MIGRATE_ON_START: 'true'
-      # Phase 5 adds STORAGE_DRIVER=disk and FILES_DIR=/app/data/files here.
+      STORAGE_DRIVER: disk
+      FILES_DIR: /app/data/files
     ports:
       - '3000:3000'
     volumes:
       - app-files:/app/data/files
 
+  # Optional S3-compatible store for checking the s3 storage driver locally:
+  #   docker compose --profile s3 up -d minio
+  # Console at http://localhost:9001 (minioadmin / minioadmin). Create bucket "app".
+  minio:
+    image: minio/minio:latest
+    profiles: ['s3']
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+
 volumes:
   postgres-data:
   app-files:
+  minio-data:

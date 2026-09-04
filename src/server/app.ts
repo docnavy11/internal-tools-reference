@@ -7,6 +7,9 @@ import { authRoutes } from './platform/auth/routes';
 import { auditRoutes } from './platform/audit/routes';
 import { jobRoutes } from './platform/jobs/routes';
 import './platform/jobs/builtin';
+import './platform/notify';
+import './platform/storage/jobs';
+import { fileRoutes } from './platform/storage/routes';
 import { pingDatabase } from './platform/db/client';
 import { logger } from './platform/http/logger';
 import { accessLog, apiNotFound, handleError, requestContext } from './platform/http/middleware';
@@ -36,6 +39,7 @@ export function createApp(): Hono<AppEnv> {
   api.route('/', userRoutes());
   api.route('/', auditRoutes());
   api.route('/', jobRoutes());
+  api.route('/', fileRoutes());
   registerFeatures(api);
   api.all('*', apiNotFound);
   app.route('/api', api);

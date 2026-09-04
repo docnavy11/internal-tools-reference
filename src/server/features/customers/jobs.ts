@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { recordAudit } from '../../platform/audit/record';
 import { getDb, withTransaction } from '../../platform/db/client';
 import { defineJob, defineSchedule } from '../../platform/jobs/define';
+import { notify } from '../../platform/notify';
 import { serializeCustomer } from './serialize';
 import { customers } from './table';
 import { users } from '../../platform/auth/table';
@@ -33,14 +34,21 @@ export const afterCustomerCreated = defineJob(
         return { skipped: true };
       }
       const customer = serializeCustomer(row.customer, row.owner);
+      // Phase 6 gates this behind a setting; until then every creation is announced.
+      await notify.slack(
+        {
+          text: `New customer: *${customer.name}*${customer.owner ? ` (owner ${customer.owner.name ?? customer.owner.email})` : ''}, plan ${customer.plan}, status ${customer.status}.`,
+        },
+        { tx },
+      );
       await recordAudit(tx, ctx.actor, {
         action: 'customers.after_create',
         entityType: 'customer',
         entityId: customerId,
-        metadata: { name: customer.name, notified: false },
+        metadata: { name: customer.name, notified: 'slack' },
       });
       ctx.log.info({ customerId, name: customer.name }, 'customer follow-up recorded');
-      return { customerId, notified: false };
+      return { customerId, notified: 'slack' };
     });
   },
   { maxAttempts: 3, timeoutMs: 30_000 },

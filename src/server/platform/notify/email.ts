@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import { env } from '../../env';
 import { logger } from '../http/logger';
 
@@ -22,21 +23,27 @@ const consoleDriver: EmailDriver = {
   },
 };
 
-function selectDriver(): EmailDriver {
-  switch (env.EMAIL_DRIVER) {
-    case 'console':
-      return consoleDriver;
-    case 'smtp':
-      // Phase 5 adds the nodemailer driver and moves sending into a job.
-      throw new Error('EMAIL_DRIVER=smtp is not implemented yet (phase 5). Use console.');
-  }
+// Any provider with SMTP (Postmark, SES, Resend, Google Workspace, Mailpit locally).
+// nodemailer is pinned to 6.x: createTransport(url).sendMail(...) is all we use.
+function smtpDriver(): EmailDriver {
+  const transport = nodemailer.createTransport(env.SMTP_URL!);
+  return {
+    async send(message) {
+      await transport.sendMail({ from: env.EMAIL_FROM!, ...message });
+    },
+  };
 }
 
 let driver: EmailDriver | null = null;
 
-export async function sendEmail(message: EmailMessage): Promise<void> {
-  driver ??= selectDriver();
-  await driver.send(message);
+function current(): EmailDriver {
+  driver ??= env.EMAIL_DRIVER === 'smtp' ? smtpDriver() : consoleDriver;
+  return driver;
+}
+
+// Direct send; used by the notify.email job. Application code calls notify.email() instead.
+export async function deliverEmail(message: EmailMessage): Promise<void> {
+  await current().send(message);
 }
 
 // Tests swap the driver to capture messages.

@@ -42,3 +42,16 @@ export const json = (body: unknown, headers: Record<string, string> = {}) => ({
   headers: { 'content-type': 'application/json', ...headers },
   body: JSON.stringify(body),
 });
+
+// Run every due job once, in this test's transaction. Notifications are jobs, so a test
+// that expects an email or a Slack message must drain the queue first.
+export async function drainJobs(max = 20) {
+  const { claimOne, runJob } = await import('../../src/server/platform/jobs/worker');
+  const outcomes = [];
+  for (let i = 0; i < max; i++) {
+    const job = await claimOne();
+    if (!job) break;
+    outcomes.push({ name: job.name, ...(await runJob(job)) });
+  }
+  return outcomes;
+}

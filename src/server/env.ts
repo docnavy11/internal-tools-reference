@@ -62,6 +62,25 @@ export const envSchema = z
     EMAIL_DRIVER: z.enum(['console', 'smtp']).default('console'),
     EMAIL_FROM: optionalString(),
     SMTP_URL: optionalString(),
+
+    SLACK_DRIVER: z.enum(['console', 'bot']).default('console'),
+    SLACK_BOT_TOKEN: optionalString(),
+    SLACK_DEFAULT_CHANNEL: optionalString(),
+
+    STORAGE_DRIVER: z.enum(['disk', 's3']).default('disk'),
+    FILES_DIR: z.string().default('./data/files'),
+    UPLOAD_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(25 * 1024 * 1024),
+    FILES_TRASH_DAYS: z.coerce.number().int().min(1).default(30),
+    S3_BUCKET: optionalString(),
+    S3_REGION: optionalString(),
+    S3_ENDPOINT: optionalString(),
+    S3_ACCESS_KEY_ID: optionalString(),
+    S3_SECRET_ACCESS_KEY: optionalString(),
+    S3_FORCE_PATH_STYLE: bool,
   })
   .refine((e) => !e.AUTH_GOOGLE_CLIENT_ID || e.AUTH_GOOGLE_CLIENT_SECRET, {
     message: 'required when AUTH_GOOGLE_CLIENT_ID is set',
@@ -74,7 +93,21 @@ export const envSchema = z
   .refine((e) => e.EMAIL_DRIVER !== 'smtp' || (e.SMTP_URL && e.EMAIL_FROM), {
     message: 'SMTP_URL and EMAIL_FROM are required when EMAIL_DRIVER=smtp',
     path: ['EMAIL_DRIVER'],
-  });
+  })
+  .refine((e) => e.SLACK_DRIVER !== 'bot' || (e.SLACK_BOT_TOKEN && e.SLACK_DEFAULT_CHANNEL), {
+    message: 'SLACK_BOT_TOKEN and SLACK_DEFAULT_CHANNEL are required when SLACK_DRIVER=bot',
+    path: ['SLACK_DRIVER'],
+  })
+  .refine(
+    (e) =>
+      e.STORAGE_DRIVER !== 's3' ||
+      (e.S3_BUCKET && e.S3_REGION && e.S3_ACCESS_KEY_ID && e.S3_SECRET_ACCESS_KEY),
+    {
+      message:
+        'S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY are required when STORAGE_DRIVER=s3',
+      path: ['STORAGE_DRIVER'],
+    },
+  );
 
 export type Env = z.infer<typeof envSchema>;
 

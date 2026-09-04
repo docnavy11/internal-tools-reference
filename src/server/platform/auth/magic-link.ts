@@ -3,7 +3,7 @@ import { and, count, eq, gt, isNull } from 'drizzle-orm';
 import { env } from '../../env';
 import type { Tx } from '../db/client';
 import { totalOf } from '../db/count';
-import { sendEmail } from '../notify/email';
+import { notify } from '../notify';
 import { hashToken } from './sessions';
 import { isAllowedDomain, normalizeEmail } from './policy';
 import { magicLinkTokens, users } from './table';
@@ -39,11 +39,14 @@ export async function requestMagicLink(
   });
   const link = new URL('/api/auth/magic/verify', env.APP_URL);
   link.searchParams.set('token', token);
-  await sendEmail({
-    to: email,
-    subject: `Sign in to ${env.APP_NAME}`,
-    text: `Use this link to sign in to ${env.APP_NAME}. It is valid for 15 minutes and can be used once.\n\n${link.toString()}\n\nIf you did not request this, you can ignore this email.`,
-  });
+  await notify.email(
+    {
+      to: email,
+      subject: `Sign in to ${env.APP_NAME}`,
+      text: `Use this link to sign in to ${env.APP_NAME}. It is valid for 15 minutes and can be used once.\n\n${link.toString()}\n\nIf you did not request this, you can ignore this email.`,
+    },
+    { tx },
+  );
   return true;
 }
 

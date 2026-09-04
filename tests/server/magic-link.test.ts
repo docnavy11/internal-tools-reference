@@ -4,6 +4,7 @@ import { requestMagicLink, verifyMagicLink } from '../../src/server/platform/aut
 import { magicLinkTokens, users } from '../../src/server/platform/auth/table';
 import { getDb, withTransaction } from '../../src/server/platform/db/client';
 import { setEmailDriver, type EmailMessage } from '../../src/server/platform/notify/email';
+import { drainJobs } from './helpers';
 
 let sent: EmailMessage[];
 const originalDomains = [...env.AUTH_ALLOWED_DOMAINS];
@@ -28,6 +29,7 @@ describe('magic link', () => {
       requestMagicLink(tx, 'First@Example.com', '/settings'),
     );
     expect(sentIt).toBe(true);
+    await drainJobs();
     expect(sent).toHaveLength(1);
     expect(sent[0]!.to).toBe('first@example.com');
     const token = tokenFrom(sent[0]!);
@@ -51,11 +53,13 @@ describe('magic link', () => {
 
     env.AUTH_ALLOWED_DOMAINS = ['company.com'];
     expect(await withTransaction((tx) => requestMagicLink(tx, 'new@company.com', null))).toBe(true);
+    await drainJobs();
     expect(sent).toHaveLength(1);
   });
 
   it('rejects expired links', async () => {
     await withTransaction((tx) => requestMagicLink(tx, 'first@example.com', null));
+    await drainJobs();
     await getDb()
       .update(magicLinkTokens)
       .set({ expiresAt: new Date(Date.now() - 1) });

@@ -43,6 +43,13 @@
       "when": 1788545560533,
       "tag": "0005_whole_gorilla_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788546676185,
+      "tag": "0006_eager_starhawk",
+      "breakpoints": true
     }
   ]
 }

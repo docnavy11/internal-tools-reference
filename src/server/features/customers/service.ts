@@ -18,6 +18,7 @@ import { enqueue } from '../../platform/jobs/enqueue';
 import { afterCustomerCreated } from './jobs';
 import { serializeCustomer } from './serialize';
 import { customers } from './table';
+import { notes } from '../notes/table';
 
 // All reads and writes for customers. Routes validate and authorize, then call here.
 // Every write runs in a transaction and records an audit row in it (adr/0011).
@@ -47,9 +48,12 @@ function whereFor(filters: CustomerFilters): SQL | undefined {
   return conditions.length ? and(...conditions) : undefined;
 }
 
+// Derived field: live notes per customer, as a correlated subquery.
+const notesCount = sql<number>`(select count(*) from ${notes} where ${notes.customerId} = ${customers.id} and ${notes.deletedAt} is null)`;
+
 function baseQuery(db: DbOrTx) {
   return db
-    .select({ customer: customers, owner: ownerColumns })
+    .select({ customer: customers, owner: ownerColumns, notesCount })
     .from(customers)
     .leftJoin(users, eq(users.id, customers.ownerId));
 }
@@ -66,7 +70,7 @@ export async function listCustomers(params: ListParams & CustomerFilters): Promi
     db.select({ total: count() }).from(customers).where(where),
   ]);
   return page(
-    rows.map((r) => serializeCustomer(r.customer, r.owner)),
+    rows.map((r) => serializeCustomer(r.customer, r.owner, Number(r.notesCount))),
     totalOf(totalRows),
     params,
   );
@@ -86,7 +90,7 @@ export async function* iterateCustomers(
       .orderBy(orderBy(params, sortColumns, customers.createdAt), desc(customers.id))
       .limit(batch)
       .offset(cursor);
-    for (const r of rows) yield serializeCustomer(r.customer, r.owner);
+    for (const r of rows) yield serializeCustomer(r.customer, r.owner, Number(r.notesCount));
     if (rows.length < batch) return;
     cursor += batch;
   }
@@ -95,7 +99,7 @@ export async function* iterateCustomers(
 async function loadOne(db: DbOrTx, id: string): Promise<Customer> {
   const row = (await baseQuery(db).where(eq(customers.id, id)).limit(1))[0];
   if (!row) throw notFound('Customer');
-  return serializeCustomer(row.customer, row.owner);
+  return serializeCustomer(row.customer, row.owner, Number(row.notesCount));
 }
 
 export async function getCustomer(id: string): Promise<Customer> {
@@ -231,7 +235,7 @@ export async function bulkCustomers(actor: Actor, input: CustomerBulkInput): Pro
     const updatedBy = actor.type === 'user' ? actor.userId : null;
     let affected = 0;
     for (const r of rows) {
-      const before = serializeCustomer(r.customer, r.owner);
+      const before = serializeCustomer(r.customer, r.owner, Number(r.notesCount));
       const set =
         input.action === 'set_status'
           ? { status: input.status }
