@@ -54,6 +54,9 @@ export default defineConfig({
       AUTH_DEV_LOGIN: 'true',
       LOG_LEVEL: 'warn',
       APP_URL: baseURL,
+      // The example integration is on in e2e so the webhooks admin page has data.
+      EXAMPLE_VENDOR_API_KEY: 'e2e-key',
+      EXAMPLE_VENDOR_WEBHOOK_SECRET: 'e2e-webhook-secret',
     },
   },
 });

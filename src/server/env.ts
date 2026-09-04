@@ -81,6 +81,11 @@ export const envSchema = z
     S3_ACCESS_KEY_ID: optionalString(),
     S3_SECRET_ACCESS_KEY: optionalString(),
     S3_FORCE_PATH_STYLE: bool,
+
+    // Example integration; enabled when the key is set. Real integrations follow the same shape.
+    EXAMPLE_VENDOR_API_KEY: optionalString(),
+    EXAMPLE_VENDOR_BASE_URL: z.string().url().default('https://example.invalid'),
+    EXAMPLE_VENDOR_WEBHOOK_SECRET: optionalString(),
   })
   .refine((e) => !e.AUTH_GOOGLE_CLIENT_ID || e.AUTH_GOOGLE_CLIENT_SECRET, {
     message: 'required when AUTH_GOOGLE_CLIENT_ID is set',
@@ -97,6 +102,10 @@ export const envSchema = z
   .refine((e) => e.SLACK_DRIVER !== 'bot' || (e.SLACK_BOT_TOKEN && e.SLACK_DEFAULT_CHANNEL), {
     message: 'SLACK_BOT_TOKEN and SLACK_DEFAULT_CHANNEL are required when SLACK_DRIVER=bot',
     path: ['SLACK_DRIVER'],
+  })
+  .refine((e) => !e.EXAMPLE_VENDOR_API_KEY || e.EXAMPLE_VENDOR_WEBHOOK_SECRET, {
+    message: 'required when EXAMPLE_VENDOR_API_KEY is set',
+    path: ['EXAMPLE_VENDOR_WEBHOOK_SECRET'],
   })
   .refine(
     (e) =>
