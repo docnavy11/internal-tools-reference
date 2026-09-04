@@ -50,6 +50,11 @@ export async function api<T>(path: string, init: ApiRequestInit = {}): Promise<T
   if (res.ok) {
     return (res.status === 204 ? undefined : await res.json()) as T;
   }
+  throw await readError(res, skipUnauthorized);
+}
+
+/** Error envelope to typed error, plus the global 401 hook. Shared by every helper. */
+async function readError(res: Response, skipUnauthorized = false): Promise<ApiRequestError> {
   let body: Partial<ApiError> = {};
   try {
     body = (await res.json()) as ApiError;
@@ -58,13 +63,31 @@ export async function api<T>(path: string, init: ApiRequestInit = {}): Promise<T
   }
   if (res.status === 401 && !skipUnauthorized) onUnauthorized?.();
   const err = body.error;
-  throw new ApiRequestError(
+  return new ApiRequestError(
     res.status,
     err?.code ?? 'http_error',
     err?.message ?? res.statusText,
     err?.requestId,
     err?.details,
   );
+}
+
+/**
+ * Multipart upload. `api()` sets a JSON content-type whenever there is a body, which
+ * would break the multipart boundary, so the request is built here instead; the error
+ * envelope mapping and the 401 hook are shared through `readError`.
+ */
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    body: formData,
+    headers: { accept: 'application/json' },
+    credentials: 'same-origin',
+  });
+  if (res.ok) {
+    return (res.status === 204 ? undefined : await res.json()) as T;
+  }
+  throw await readError(res, false);
 }
 
 /** POST/PATCH helper: serialises the body and returns the parsed response. */

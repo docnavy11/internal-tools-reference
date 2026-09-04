@@ -4,8 +4,9 @@ Reference template for internal tools at startups. One repository, cloned per to
 that already solves the twelve things every internal tool needs so that building the
 actual application is mostly adding entities and integrations.
 
-Status: **phases 1 to 3 implemented** (skeleton; auth, authorization, shell, users
-admin; CRUD kit, audit log UI, customers golden example). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+Status: **phases 1 to 4 implemented** (skeleton; auth, authorization, shell, users
+admin; CRUD kit, audit log UI, customers golden example; job queue, scheduler, jobs
+admin, CSV import). See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
@@ -102,7 +103,10 @@ which driver is active.
 src/
   shared/                      imported by both client and server, no Node or DOM APIs
     permissions.ts             roles and permission strings
-    api-types.ts               pagination envelope, error envelope
+    api-types.ts               pagination envelope, error envelope, list params, BulkResult
+    query.ts                   csvArray for comma-separated multi-value filters
+    user-ref.ts                { id, name, email } shape shared by owners and actors
+    auth.ts, audit.ts, jobs.ts contracts of the platform APIs
     features/<name>/schema.ts  Zod schemas: record, input, filters
   server/
     main.ts                    reads APP_MODE, starts web and/or worker
@@ -157,7 +161,8 @@ src/
     lib/                       utils (cn)
     features/<name>/
       api.ts, list.tsx, detail.tsx, form.tsx, nav.ts, routes.tsx
-    pages/                     home, settings/ (layout, users, audit), later jobs, files
+                               (customers also has import-dialog.tsx)
+    pages/                     home, settings/ (layout, users, audit, jobs*), later files
 drizzle/                       generated SQL migrations, never edited after apply
 tests/
   server/                      Vitest, real Postgres

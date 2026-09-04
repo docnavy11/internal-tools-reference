@@ -99,6 +99,16 @@ description, last and next run, enable toggle, "run now".
   job (max 1 attempt) that inserts in batches of 200 and reports per-row failures.
   Status endpoint is visible to the requester and admins only.
 
+## As built (phase 4, client)
+
+- `/settings/jobs` in `src/client/pages/settings/jobs*.tsx`: Jobs tab is a `DataTable`
+  with status and name filters that polls every 5 seconds while a visible row is pending
+  or running (`refetchInterval` prop), row click opens a sheet with payload, result, error,
+  Retry and Cancel; Schedules tab is a plain table with an enabled switch and Run now.
+- Import dialog in `src/client/features/customers/import-dialog.tsx`: template download,
+  upload via `apiUpload` (FormData), rejected rows table, status polling, result summary.
+- `DataTable` gained optional `refetchInterval(page)` and `onRowClick(row)`.
+
 ## Done when
 
 - Tests: claim is exclusive under two concurrent workers, retry with backoff, dead

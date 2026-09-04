@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { userRefSchema } from './features/customers/schema';
+import { userRefSchema } from './user-ref';
 
 // GET /api/audit (permission audit:read) and GET /api/<plural>/:id/history.
 

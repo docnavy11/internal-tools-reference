@@ -12,6 +12,7 @@ const reactHooksRules =
 export default tseslint.config(
   {
     ignores: [
+      '.claude/**',
       'dist/**',
       'node_modules/**',
       'drizzle/**',

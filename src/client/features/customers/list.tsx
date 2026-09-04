@@ -28,6 +28,7 @@ import {
   fetchCustomerPage,
   useBulkCustomers,
 } from '@/client/features/customers/api';
+import { ImportCustomersDialog } from '@/client/features/customers/import-dialog';
 
 /**
  * The golden example list page. A new entity copies this file and changes the schema
@@ -173,12 +174,15 @@ export function CustomersListPage() {
         description="The golden example entity. Copy this feature when you add your own."
         actions={
           mayWrite ? (
-            <Button asChild size="sm">
-              <Link to="/customers/new">
-                <PlusIcon />
-                New customer
-              </Link>
-            </Button>
+            <>
+              <ImportCustomersDialog />
+              <Button asChild size="sm">
+                <Link to="/customers/new">
+                  <PlusIcon />
+                  New customer
+                </Link>
+              </Button>
+            </>
           ) : null
         }
       />

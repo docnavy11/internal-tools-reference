@@ -1,4 +1,4 @@
-import { HomeIcon, ScrollTextIcon, UsersIcon, type LucideIcon } from 'lucide-react';
+import { HomeIcon, ListChecksIcon, ScrollTextIcon, UsersIcon, type LucideIcon } from 'lucide-react';
 import { useSession } from '@/client/platform/auth/session';
 import type { Permission } from '@/shared/permissions';
 // One import line per feature that appears in the navigation.
@@ -45,6 +45,14 @@ export const navEntries: NavEntry[] = [
     permission: 'audit:read',
     group: 'settings',
     order: 20,
+  },
+  {
+    label: 'Jobs',
+    icon: ListChecksIcon,
+    to: '/settings/jobs',
+    permission: 'jobs:manage',
+    group: 'settings',
+    order: 30,
   },
 ];
 

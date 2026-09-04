@@ -18,6 +18,11 @@ export interface ApiError {
   };
 }
 
+// Response of a bulk action: how many records actually changed.
+export interface BulkResult {
+  affected: number;
+}
+
 // Query parameters every list endpoint accepts, before entity-specific filters.
 export const listParamsSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

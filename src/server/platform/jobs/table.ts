@@ -11,9 +11,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { jobStatuses } from '../../../shared/jobs';
-import { id } from '../db/columns';
-
-const inList = (values: readonly string[]) => sql.raw(values.map((v) => `'${v}'`).join(', '));
+import { enumCheck, id } from '../db/columns';
 
 // Background work. Claimed with FOR UPDATE SKIP LOCKED (adr/0006).
 export const jobs = pgTable(
@@ -38,7 +36,7 @@ export const jobs = pgTable(
     finishedAt: timestamp('finished_at', { withTimezone: true }),
   },
   (t) => [
-    check('jobs_status_check', sql`${t.status} in (${inList(jobStatuses)})`),
+    check('jobs_status_check', enumCheck(t.status, jobStatuses)),
     index('jobs_claim_idx').on(t.status, t.runAt),
     index('jobs_name_created_idx').on(t.name, t.createdAt),
     index('jobs_finished_idx').on(t.status, t.finishedAt),

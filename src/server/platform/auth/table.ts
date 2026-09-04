@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import {
   check,
   index,
@@ -9,9 +8,7 @@ import {
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { roles, userStatuses } from '../../../shared/permissions';
-import { id, timestamps } from '../db/columns';
-
-const inList = (values: readonly string[]) => sql.raw(values.map((v) => `'${v}'`).join(', '));
+import { enumCheck, id, timestamps } from '../db/columns';
 
 export const users = pgTable(
   'users',
@@ -27,8 +24,8 @@ export const users = pgTable(
     ...timestamps(),
   },
   (t) => [
-    check('users_role_check', sql`${t.role} in (${inList(roles)})`),
-    check('users_status_check', sql`${t.status} in (${inList(userStatuses)})`),
+    check('users_role_check', enumCheck(t.role, roles)),
+    check('users_status_check', enumCheck(t.status, userStatuses)),
     index('users_invited_by_idx').on(t.invitedBy),
   ],
 );

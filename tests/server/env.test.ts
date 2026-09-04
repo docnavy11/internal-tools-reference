@@ -27,6 +27,19 @@ describe('env', () => {
     expect(result.env.AUTH_DEV_LOGIN).toBe(false);
   });
 
+  it('treats empty optional variables from a copied .env.example as unset', () => {
+    const result = parseEnv({
+      ...valid,
+      AUTH_GOOGLE_CLIENT_ID: '',
+      EMAIL_FROM: '',
+      AUDIT_RETENTION_DAYS: '',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.env.AUTH_GOOGLE_CLIENT_ID).toBeUndefined();
+    expect(result.env.AUDIT_RETENTION_DAYS).toBeUndefined();
+  });
+
   it('points DATABASE_URL at the test database under NODE_ENV=test', () => {
     const result = parseEnv({
       ...valid,

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, apiSend } from '@/client/platform/api/client';
+import { api, apiSend, apiUpload } from '@/client/platform/api/client';
 import type { Page } from '@/shared/api-types';
 import type {
   BulkResult,
@@ -7,6 +7,8 @@ import type {
   CustomerBulkInput,
   CustomerInput,
   CustomerPatch,
+  ImportAccepted,
+  ImportStatus,
 } from '@/shared/features/customers/schema';
 
 /**
@@ -82,4 +84,33 @@ export function useBulkCustomers() {
   return useCustomerMutation((input: CustomerBulkInput) =>
     apiSend<BulkResult>('POST', '/api/customers/bulk', input),
   );
+}
+
+// CSV import. The upload is multipart, so it goes through `apiUpload` rather than the
+// JSON helper; the response is a 202 and the real work happens in a job, which the
+// dialog follows through `useImportStatus`.
+
+export const customersImportTemplateUrl = '/api/customers/import/template';
+
+export function importCustomers(file: File): Promise<ImportAccepted> {
+  const form = new FormData();
+  form.append('file', file);
+  return apiUpload<ImportAccepted>('/api/customers/import', form);
+}
+
+/**
+ * Polls the import job until it reaches a terminal state, then stops. Enabled only
+ * once there is a job id, so the dialog can mount the hook before the upload.
+ */
+export function useImportStatus(jobId: string | null) {
+  return useQuery({
+    queryKey: [...customersKey, 'import', jobId],
+    queryFn: () => api<ImportStatus>(`/api/customers/import/${jobId}`),
+    enabled: jobId !== null,
+    refetchInterval: (query) => (query.state.data && isImportDone(query.state.data) ? false : 1500),
+  });
+}
+
+export function isImportDone(status: ImportStatus): boolean {
+  return status.status !== 'pending' && status.status !== 'running';
 }

@@ -1,66 +1,108 @@
 # Recipe: add an entity
 
-Server steps (1 to 5, 7, 8) were corrected against the `customers` golden example in
-phase 3; copy from `src/server/features/customers/` and `src/shared/features/customers/`.
-Client steps follow the same example under `src/client/features/customers/`.
+Validated in phase 4 by an agent that followed only this document and the files it
+names to add a `vendors` entity; every gap it hit is fixed below. Copy from
+`src/server/features/customers/`, `src/shared/features/customers/` and
+`src/client/features/customers/`. Before starting, skim these platform files once so the
+types make sense: `src/server/platform/db/columns.ts`, `src/shared/query.ts`,
+`src/shared/api-types.ts`, `src/client/platform/data-table/types.ts` and
+`use-list-params.ts`, `src/client/platform/form/entity-form.tsx`.
 
 Running example: `vendors` with fields `name`, `email`, `status` (`active`,
 `inactive`), `ownerId`.
 
 ## 1. Shared schema
 
-Create `src/shared/features/vendors/schema.ts`:
+Create `src/shared/features/vendors/schema.ts`. Every block below is required; the
+list page, bulk bar and CSV export depend on all of them.
 
 ```ts
 import { z } from 'zod';
+import type { BulkResult } from '../../api-types';
+import { csvArray } from '../../query';
+import { userRefSchema } from '../../user-ref';
 
-export const vendorStatus = z.enum(['active', 'inactive']);
+export const vendorStatuses = ['active', 'inactive'] as const;
+export const vendorStatus = z.enum(vendorStatuses);
 
+// Full record as returned by the API. deletedAt is part of it: entities are soft-deleted.
 export const vendorSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1).max(200),
+  name: z.string(),
   email: z.string().email().nullable(),
   status: vendorStatus,
-  ownerId: z.string().uuid().nullable(),
+  owner: userRefSchema.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime().nullable(),
+  deletedAt: z.string().datetime().nullable(),
 });
 export type Vendor = z.infer<typeof vendorSchema>;
 
-export const vendorInput = vendorSchema.pick({ name: true, email: true, status: true, ownerId: true });
-export type VendorInput = z.infer<typeof vendorInput>;
-
-export const vendorFilters = z.object({
-  status: z.array(vendorStatus).optional(),
-  ownerId: z.string().uuid().optional(),
+// Create body, written by hand (not picked from vendorSchema) so optional fields carry
+// defaults and a body may omit them. PATCH takes the partial.
+export const vendorInput = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200),
+  email: z.string().trim().email().max(320).nullable().default(null),
+  status: vendorStatus.default('active'),
+  ownerId: z.string().uuid().nullable().default(null),
 });
+export type VendorInput = z.infer<typeof vendorInput>;
+export const vendorPatch = vendorInput.partial();
+
+// List filters. `q` powers the search box (DataTable always sends it) and
+// `includeDeleted` the "show deleted" toggle; multi-value filters use csvArray.
+export const vendorFilters = z.object({
+  q: z.string().max(200).optional(),
+  status: csvArray(vendorStatus),
+  ownerId: z.string().uuid().optional(),
+  includeDeleted: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => v === 'true'),
+});
+
+// Columns the API accepts in `sort`; column ids in the client table must match.
+export const vendorSortColumns = ['name', 'email', 'status', 'createdAt', 'updatedAt'] as const;
+
+export const vendorBulkInput = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('set_status'), ids: z.array(z.string().uuid()).min(1).max(200), status: vendorStatus }),
+  z.object({ action: z.literal('delete'), ids: z.array(z.string().uuid()).min(1).max(200) }),
+]);
+export type { BulkResult };
 ```
 
-Multi-value filters use `csvArray(...)` from `src/shared/query.ts` (one query parameter,
-comma-separated). Give optional create fields a `.default(...)` so a body may omit them.
-
 Add permission strings `vendors:read`, `vendors:write`, `vendors:delete` to
-`src/shared/permissions.ts` and assign them to roles.
+`src/shared/permissions.ts` and assign them to roles. The default split used by
+customers is: admin everything, member read and write, viewer read.
 
 ## 2. Table and migration
 
 Create `src/server/features/vendors/table.ts` using the column helpers:
 
 ```ts
-export const vendors = pgTable('vendors', {
-  ...id(),
-  name: text('name').notNull(),
-  email: text('email'),
-  status: text('status').notNull().default('active'),
-  ownerId: uuid('owner_id').references(() => users.id),
-  ...actorColumns(),
-  ...timestamps(),
-  ...softDelete(),
-}, (t) => [
-  check('vendors_status_check', sql`${t.status} in ('active','inactive')`),
-  index('vendors_owner_idx').on(t.ownerId),
-]);
+export const vendors = pgTable(
+  'vendors',
+  {
+    ...id(),
+    name: text('name').notNull(),
+    email: text('email'),
+    status: text('status').notNull().default('active'),
+    ownerId: uuid('owner_id').references(() => users.id),
+    ...actorColumns(),
+    ...timestamps(),
+    ...softDelete(),
+  },
+  (t) => [
+    // enumCheck keeps the constraint in step with the shared enum array.
+    check('vendors_status_check', enumCheck(t.status, vendorStatuses)),
+    index('vendors_owner_idx').on(t.ownerId),
+    index('vendors_live_idx').on(t.createdAt).where(sql`${t.deletedAt} is null`),
+  ],
+);
 ```
+
+`enumCheck`, `id`, `timestamps`, `softDelete` come from `platform/db/columns.ts`;
+`actorColumns` and `users` from `platform/auth/table.ts`.
 
 Export it from `src/server/platform/db/schema.ts` (the registry Drizzle reads). Run
 `npm run db:generate`, read the SQL it produced, then `npm run db:migrate`.
@@ -68,7 +110,9 @@ Export it from `src/server/platform/db/schema.ts` (the registry Drizzle reads). 
 ## 3. Serializer and service
 
 Create `serialize.ts` with `serializeVendor(row, owner): Vendor` (dates to ISO strings,
-joined user as `{ id, name, email }`). This is the API shape and what lands in audit
+joined user as `{ id, name, email }`). Note the two similarly named things: the service's
+local `sortColumns` maps names to Drizzle columns for `orderBy`; the shared
+`vendorSortColumns` is the string allowlist the route validates against. This is the API shape and what lands in audit
 snapshots, so nothing internal leaks.
 
 Create `service.ts` from `customers/service.ts`: `whereFor(filters)`, `baseQuery(db)`
@@ -115,6 +159,9 @@ Register with two lines: spread `vendorRoutes` into the shell's children in
 
 ## 7. Tests
 
+Copy `tests/e2e/customers.spec.ts` to `tests/e2e/vendors.spec.ts` and adjust names,
+fields and routes; run it with `npm run build && npm run test:e2e`.
+
 Create `tests/server/vendors.test.ts` from `tests/server/customers.test.ts`: permissions
 per role, create with defaults and audit snapshot, validation envelope, update with
 before/after, list filters/search/sort/paging, soft delete and restore with history
@@ -124,7 +171,9 @@ order, bulk auditing per record, CSV escaping. Use `signInAs` and `auditRows` fr
 
 ## 8. Seed and docs
 
-Add a few rows to `seed.ts`. If the entity has a job or a setting, follow the
+Add a few rows to `src/server/platform/db/seed.ts` (not `src/server/scripts/seed.ts`,
+which is only the CLI entry point), guarded like the customers rows so the seed stays
+idempotent. If the entity has a job or a setting, follow the
 matching recipe. Run `npm run check` (typecheck, lint, tests). Done.
 
 ## Checklist

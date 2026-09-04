@@ -74,12 +74,26 @@ export interface DataTableProps<T extends { id: string }, K extends string> {
   bulkActions?: BulkAction[];
   exportUrl?: (params: URLSearchParams) => string;
   rowHref?: (row: T) => string;
+  /**
+   * Clicking a row opens something in place instead of navigating. Use it when the
+   * detail is a panel rather than a page; a list with a real detail route uses
+   * `rowHref` so the row is a link and can be opened in a new tab. The row click is a
+   * shortcut for the mouse, so a column must still carry a real button or link:
+   * `<tr>` cannot be made keyboard-operable without breaking table semantics.
+   */
+  onRowClick?: (row: T) => void;
   searchPlaceholder?: string;
   /** Extra panel under a row, opened by a chevron. Used by the audit log for diffs. */
   expandable?: (row: T) => React.ReactNode;
   empty?: { icon?: LucideIcon; title: string; description?: string; action?: React.ReactNode };
   /** Announced to screen readers and used in the "N selected" bar. */
   entityName?: string;
+  /**
+   * Polling for lists whose rows change without the user doing anything. Called with
+   * the page currently shown; return milliseconds to poll, or false to stop. The jobs
+   * admin uses it to follow rows that are still pending or running.
+   */
+  refetchInterval?: (page: Page<T> | undefined) => number | false;
 }
 
 export function DataTable<T extends { id: string }, K extends string>({
@@ -92,10 +106,12 @@ export function DataTable<T extends { id: string }, K extends string>({
   bulkActions = [],
   exportUrl,
   rowHref,
+  onRowClick,
   searchPlaceholder,
   expandable,
   empty,
   entityName = 'rows',
+  refetchInterval,
 }: DataTableProps<T, K>) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -106,6 +122,7 @@ export function DataTable<T extends { id: string }, K extends string>({
     queryKey: [...queryKey, search],
     queryFn: () => fetchPage(new URLSearchParams(search)),
     placeholderData: keepPreviousData,
+    refetchInterval: (query) => (refetchInterval ? refetchInterval(query.state.data) : false),
   });
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -255,6 +272,7 @@ export function DataTable<T extends { id: string }, K extends string>({
                     row={row}
                     href={rowHref?.(row.original)}
                     onOpen={(href) => void navigate(href)}
+                    onSelect={onRowClick ? () => onRowClick(row.original) : undefined}
                     expanded={expandedId === row.id}
                     expandedContent={expandable?.(row.original)}
                     columnCount={columnCount}
@@ -274,6 +292,7 @@ function DataRow<T>({
   row,
   href,
   onOpen,
+  onSelect,
   expanded,
   expandedContent,
   columnCount,
@@ -281,22 +300,28 @@ function DataRow<T>({
   row: Row<T>;
   href?: string;
   onOpen: (href: string) => void;
+  onSelect?: () => void;
   expanded: boolean;
   expandedContent?: React.ReactNode;
   columnCount: number;
 }) {
+  const clickable = href !== undefined || onSelect !== undefined;
+  const activate = () => {
+    if (href !== undefined) onOpen(href);
+    else onSelect?.();
+  };
   return (
     <>
       <TableRow
         data-state={row.getIsSelected() ? 'selected' : undefined}
-        className={href ? 'cursor-pointer' : undefined}
+        className={clickable ? 'cursor-pointer' : undefined}
         onClick={
-          href
+          clickable
             ? (event) => {
                 // Let checkboxes, buttons and the name link do their own thing.
                 if ((event.target as HTMLElement).closest('a,button,input,[role="checkbox"]'))
                   return;
-                onOpen(href);
+                activate();
               }
             : undefined
         }

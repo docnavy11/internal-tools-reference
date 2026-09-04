@@ -49,8 +49,8 @@ is refused as viewer.
 Blocks 04, 05, and the `customers` golden example. As built: server by the lead
 (52 Vitest tests), client kit and pages by an agent against the shared contract
 (16 Playwright tests), users page migrated onto the kit. CSV import moves to phase 4
-with jobs. The "add a throwaway entity by following the recipe" acceptance step has not
-been run yet; do it at the start of phase 4 as the first real use of the recipe.
+with jobs. The "add a throwaway entity by following the recipe" acceptance step was run at the
+start of phase 4 (see there).
 
 - `DataTable`, filter bar, `useListParams`, `EntityForm`, field components,
   `DetailPage`, `HistoryTab`, `ConfirmDialog`, `EmptyState`, `StatusBadge`.
@@ -65,9 +65,14 @@ the list, sees the audit entry, downloads a CSV; the recipe was followed once by
 Claude Code to add a throwaway second entity without needing to read platform code,
 then the throwaway was deleted.
 
-## Phase 4: jobs and cron (medium)
+## Phase 4: jobs and cron (medium) — implemented 2026-09-04
 
-Block 06.
+Block 06. As built: queue, scheduler, admin API and customers jobs by the lead
+(72 Vitest tests, including a three-worker exclusivity test), jobs page and import
+dialog by an agent (20 Playwright tests). The phase 3 acceptance step was run here: a
+Sonnet agent added a throwaway `vendors` entity in an isolated worktree using only
+`docs/recipes/add-entity.md`; it succeeded (59 tests green) and its findings were folded
+into the recipe and into two code fixes (empty `.env` values, shared `userRefSchema`).
 
 - Jobs table, `defineJob`, `enqueue`, worker loop, reaper, scheduler, graceful
   shutdown, cleanup job.

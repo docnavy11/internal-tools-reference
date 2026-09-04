@@ -1,8 +1,15 @@
 import { z } from 'zod';
 import { csvArray } from '../../query';
+import { userRefSchema } from '../../user-ref';
+
+// Re-exported for existing importers; new code imports from src/shared/user-ref and
+// src/shared/api-types directly.
+export { userRefSchema, type UserRef } from '../../user-ref';
+export type { BulkResult } from '../../api-types';
 
 // Golden example entity. See docs/ARCHITECTURE.md section 12 and docs/recipes/add-entity.md.
-// Delete or rename this feature when starting a real tool.
+// Delete or rename this feature when starting a real tool: nothing outside
+// src/*/features/customers and the registration lines depends on it.
 
 export const customerStatuses = ['lead', 'active', 'churned'] as const;
 export const customerStatus = z.enum(customerStatuses);
@@ -11,15 +18,6 @@ export type CustomerStatus = z.infer<typeof customerStatus>;
 export const customerPlans = ['free', 'pro', 'enterprise'] as const;
 export const customerPlan = z.enum(customerPlans);
 export type CustomerPlan = z.infer<typeof customerPlan>;
-
-// Minimal shape of a user shown next to a record (owner, actor). Any signed-in user
-// may see this much about colleagues.
-export const userRefSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().nullable(),
-  email: z.string().email(),
-});
-export type UserRef = z.infer<typeof userRefSchema>;
 
 // Full record as returned by the API.
 export const customerSchema = z.object({
@@ -89,10 +87,6 @@ export const customerBulkInput = z.discriminatedUnion('action', [
   z.object({ action: z.literal('delete'), ids: z.array(z.string().uuid()).min(1).max(200) }),
 ]);
 export type CustomerBulkInput = z.infer<typeof customerBulkInput>;
-
-export interface BulkResult {
-  affected: number;
-}
 
 // CSV import. POST /api/customers/import (multipart, field `file`) validates every row
 // synchronously and enqueues the valid ones as one job. Columns: name, email, status,

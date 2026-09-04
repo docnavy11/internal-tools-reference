@@ -3,6 +3,10 @@ import { z } from 'zod';
 // The only place process.env is read. Every variable is documented in docs/CONFIG.md
 // and listed in .env.example. New variables go in all three places.
 
+// `KEY=` in a .env file arrives as "" and means "not set" for optional variables.
+const optionalString = (schema: z.ZodString = z.string().min(1)) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 const bool = z
   .enum(['true', 'false'])
   .default('false')
@@ -23,7 +27,7 @@ export const envSchema = z
     SESSION_SECRET: z.string().min(32, 'must be at least 32 characters'),
 
     DATABASE_URL: z.string().min(1),
-    DATABASE_URL_TEST: z.string().min(1).optional(),
+    DATABASE_URL_TEST: optionalString(),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
     MIGRATE_ON_START: bool,
 
@@ -38,10 +42,10 @@ export const envSchema = z
           .filter(Boolean),
       ),
     AUTH_DEFAULT_ROLE: z.enum(['admin', 'member', 'viewer']).default('member'),
-    AUTH_GOOGLE_CLIENT_ID: z.string().min(1).optional(),
-    AUTH_GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
-    AUTH_MICROSOFT_CLIENT_ID: z.string().min(1).optional(),
-    AUTH_MICROSOFT_CLIENT_SECRET: z.string().min(1).optional(),
+    AUTH_GOOGLE_CLIENT_ID: optionalString(),
+    AUTH_GOOGLE_CLIENT_SECRET: optionalString(),
+    AUTH_MICROSOFT_CLIENT_ID: optionalString(),
+    AUTH_MICROSOFT_CLIENT_SECRET: optionalString(),
     AUTH_MICROSOFT_TENANT: z.string().min(1).default('organizations'),
     AUTH_MAGIC_LINK: bool,
     SESSION_TTL_DAYS: z.coerce.number().int().positive().default(30),
@@ -50,11 +54,14 @@ export const envSchema = z
     JOBS_POLL_MS: z.coerce.number().int().min(50).default(1000),
     JOBS_RETENTION_DAYS: z.coerce.number().int().min(1).default(30),
     JOBS_SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).default(30000),
-    AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional(),
+    AUDIT_RETENTION_DAYS: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.coerce.number().int().min(1).optional(),
+    ),
 
     EMAIL_DRIVER: z.enum(['console', 'smtp']).default('console'),
-    EMAIL_FROM: z.string().optional(),
-    SMTP_URL: z.string().optional(),
+    EMAIL_FROM: optionalString(),
+    SMTP_URL: optionalString(),
   })
   .refine((e) => !e.AUTH_GOOGLE_CLIENT_ID || e.AUTH_GOOGLE_CLIENT_SECRET, {
     message: 'required when AUTH_GOOGLE_CLIENT_ID is set',

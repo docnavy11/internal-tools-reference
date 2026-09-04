@@ -8,6 +8,7 @@ import { HomePage } from '@/client/pages/home';
 import { SettingsIndexRedirect, SettingsLayout } from '@/client/pages/settings/layout';
 import { UsersPage } from '@/client/pages/settings/users';
 import { AuditPage } from '@/client/pages/settings/audit';
+import { JobsPage } from '@/client/pages/settings/jobs';
 // One import line per feature.
 import { customerRoutes } from '@/client/features/customers/routes';
 
@@ -52,6 +53,15 @@ export const router = createBrowserRouter([
               </RequirePermission>
             ),
             handle: { title: 'Audit log' },
+          },
+          {
+            path: 'jobs',
+            element: (
+              <RequirePermission permission="jobs:manage">
+                <JobsPage />
+              </RequirePermission>
+            ),
+            handle: { title: 'Jobs' },
           },
         ],
       },

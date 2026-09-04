@@ -2,9 +2,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 import { customerPlans, customerStatuses } from '../../../shared/features/customers/schema';
 import { actorColumns, users } from '../../platform/auth/table';
-import { id, softDelete, timestamps } from '../../platform/db/columns';
-
-const inList = (values: readonly string[]) => sql.raw(values.map((v) => `'${v}'`).join(', '));
+import { enumCheck, id, softDelete, timestamps } from '../../platform/db/columns';
 
 // Golden example. Mirrors src/shared/features/customers/schema.ts by hand (adr/0008).
 export const customers = pgTable(
@@ -26,8 +24,8 @@ export const customers = pgTable(
     ...softDelete(),
   },
   (t) => [
-    check('customers_status_check', sql`${t.status} in (${inList(customerStatuses)})`),
-    check('customers_plan_check', sql`${t.plan} in (${inList(customerPlans)})`),
+    check('customers_status_check', enumCheck(t.status, customerStatuses)),
+    check('customers_plan_check', enumCheck(t.plan, customerPlans)),
     index('customers_owner_idx').on(t.ownerId),
     index('customers_status_idx').on(t.status),
     index('customers_created_by_idx').on(t.createdBy),
