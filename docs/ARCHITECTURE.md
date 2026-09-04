@@ -321,6 +321,9 @@ change at runtime; env is for wiring and secrets.
   `Referrer-Policy`, `frame-ancestors 'none'`.
 - Dev login exists only when `NODE_ENV !== 'production'` and `AUTH_DEV_LOGIN=true`.
 
+The invariants behind this list, the phase 7 review findings and what remains unverified
+are in `SECURITY.md`.
+
 ## 12. Golden examples
 
 Two features ship with the template and are meant to be deleted or renamed:

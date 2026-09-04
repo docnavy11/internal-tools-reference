@@ -63,4 +63,5 @@ deployment before inviting users.
 - `docs/recipes/`: how to start a tool, add an entity, a job, an integration or a setting.
 - `docs/adr/`: why things are the way they are.
 - `docs/CONFIG.md`: every environment variable.
+- `docs/SECURITY.md`: security invariants, the review findings, what is not verified.
 - `CLAUDE.md`: the rule book for changing the repo.

@@ -20,7 +20,8 @@ Phase 7 (hardening and handover) is in progress. Update this section as phases l
 2. The block spec in `docs/blocks/` for the area you are touching.
 3. The recipe in `docs/recipes/` if you are adding an entity, job, integration or
    setting. Follow it literally; if it is wrong, fix the recipe in the same change.
-4. `docs/adr/` before proposing a different library or pattern. `adr/0002` explains
+4. `docs/SECURITY.md` before touching auth, webhooks, storage or the HTTP platform.
+5. `docs/adr/` before proposing a different library or pattern. `adr/0002` explains
    why some choices look conservative.
 
 ## Hard rules
