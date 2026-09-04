@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream';
+import type { Readable } from 'node:stream';
 import { Hono } from 'hono';
 import { stream } from 'hono/streaming';
 import { z } from 'zod';

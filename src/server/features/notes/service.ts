@@ -91,10 +91,18 @@ export async function createNote(
   return withTransaction(async (tx) => {
     await ensureCustomer(tx, customerId);
     const actorId = actor.type === 'user' ? actor.userId : null;
+    // Application time, not the column default: Postgres now() is the transaction start,
+    // so notes created in one transaction (tests) would tie and list in random order.
     const inserted = (
       await tx
         .insert(notes)
-        .values({ customerId, body: input.body, createdBy: actorId, updatedBy: actorId })
+        .values({
+          customerId,
+          body: input.body,
+          createdBy: actorId,
+          updatedBy: actorId,
+          createdAt: new Date(),
+        })
         .returning({ id: notes.id })
     )[0]!;
     if (input.attachment) {
