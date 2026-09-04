@@ -191,9 +191,10 @@ describe('job queue under concurrency (real pool, outside the test transaction)'
       queued.filter((j) => j.dedupeKey?.startsWith('schedule:test.echo.hourly:')),
     ).toHaveLength(1);
     await pool.delete(jobs).where(eqOp(jobs.name, echo.name));
+    // Leave the shared row the way the sequential schedule test expects to find it.
     await pool
       .update(schedulesTable)
-      .set({ enabled: false })
+      .set({ enabled: true, nextRunAt: new Date(Date.now() + 3600_000) })
       .where(eqOp(schedulesTable.name, 'test.echo.hourly'));
   });
 
@@ -246,7 +247,7 @@ describe('schedules', () => {
     // Make the test schedule due, keep the others in the future.
     await getDb()
       .update(schedules)
-      .set({ nextRunAt: new Date(Date.now() - 1000) })
+      .set({ nextRunAt: new Date(Date.now() - 1000), enabled: true })
       .where(eq(schedules.name, 'test.echo.hourly'));
     expect(await tickScheduler()).toBe(1);
     expect(await tickScheduler()).toBe(0);
