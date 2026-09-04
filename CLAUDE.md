@@ -4,15 +4,13 @@ Conventions for anyone changing this repository, human or agent.
 
 ## Status
 
-Phases 1 to 3 are implemented: build, env validation, database and migrations, HTTP
-platform, health, APP_MODE switch, Docker, CI; auth (OIDC, magic link, dev login,
-sessions), permissions with the route coverage test, audit log, users admin, UI shell,
-login page; CRUD kit (data table, forms, detail, history), audit page, the
-`customers` golden example; Postgres job queue and scheduler with the jobs admin page,
-CSV import; file storage (disk, S3), email and Slack through jobs, the `notes` child
-entity with attachments; settings registry with its page, vendor client, webhook inbox
-with its page, example vendor; security headers, error reporter, client error endpoint.
-Phase 7 (hardening and handover) is in progress. Update this section as phases land.
+All seven phases of `docs/BUILD_PLAN.md` are implemented: build and deployment
+skeleton; auth (OIDC, magic link, dev login, sessions), permissions with the route
+coverage test, audit log, users admin, UI shell; CRUD kit, audit page, the `customers`
+golden example; job queue and scheduler with the jobs page, CSV import; storage,
+notifications, the `notes` child entity; settings, integrations with the webhook inbox;
+hardening, security review, command palette, code splitting. Keep this section true as
+the tool built from the template evolves.
 
 ## Read first
 

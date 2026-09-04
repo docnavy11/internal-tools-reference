@@ -6,7 +6,7 @@ login, roles and permissions, tables and forms with validation, audit history,
 background jobs and schedules, file uploads, email and Slack, settings and feature
 flags, structured logging, and a UI shell.
 
-Status: phases 1 to 6 of 7 implemented, phase 7 (hardening and handover) in progress. See `docs/BUILD_PLAN.md`.
+Status: all seven phases of `docs/BUILD_PLAN.md` implemented. 116 unit and API tests, 31 end-to-end tests.
 
 Stack in one line: TypeScript, React with Vite, Hono, Postgres with Drizzle,
 shadcn/ui on Tailwind 4, one Docker image that runs anywhere.

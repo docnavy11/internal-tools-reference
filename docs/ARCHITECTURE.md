@@ -5,8 +5,8 @@ that already solves the twelve things every internal tool needs so that building
 actual application is mostly adding entities and integrations.
 
 Status: **all seven phases implemented** (2026-09-04). What remains unverified outside
-this repository is listed in `SECURITY.md`. Where this document and the code disagree,
-the code was checked more recently; fix the document. See `BUILD_PLAN.md` for what each phase adds. Where this document and the code disagree, the code was checked more recently;
+this repository is listed in `SECURITY.md`. See `BUILD_PLAN.md` for what each phase
+added. Where this document and the code disagree, the code was checked more recently;
 fix the document.
 
 ## 1. Goals and non-goals
