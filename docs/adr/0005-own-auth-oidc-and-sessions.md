@@ -1,6 +1,6 @@
 # 0005 Authentication is implemented in the repo: OIDC client plus session table
 
-Accepted, 2026-09-04
+Accepted, 2026-09-04. Amended by `0014` (identity trust per provider, tenant allowlist, state cookie).
 
 ## Context
 
