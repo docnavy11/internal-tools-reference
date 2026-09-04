@@ -34,7 +34,7 @@ export function csvResponse<T>(
   c.header('content-disposition', `attachment; filename="${filename.replace(/[^\w.-]/g, '_')}"`);
   c.header('cache-control', 'no-store');
   return stream(c, async (out) => {
-    await out.write('﻿' + csvLine(columns.map((col) => col.header)));
+    await out.write('\uFEFF' + csvLine(columns.map((col) => col.header)));
     for await (const row of rows) {
       await out.write(csvLine(columns.map((col) => col.value(row))));
     }
