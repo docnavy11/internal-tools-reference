@@ -48,6 +48,25 @@ Not in the template. Logs carry duration and status, which is enough to derive r
 and latencies in any log platform. A future ADR can add a `/metrics` endpoint if a
 tool needs Prometheus.
 
+## As built (phases 1 and 7)
+
+- `platform/http/logger.ts` exports `loggerOptions` (redaction of authorization, cookie,
+  token, password, secret paths) and the singleton `logger`; tests build a logger with a
+  sink from the same options to prove redaction.
+- `platform/http/error-reporter.ts`: `reportError(err, ctx)`; console driver by default,
+  Sentry driver when `SENTRY_DSN` is set (dynamically imports `@sentry/node`, which is not
+  a dependency of the template and must be installed by the tool that wants it). Called
+  for 500s (`handleError`) and dead jobs (`runJob`). `initErrorReporter()` runs at boot.
+- `platform/http/security-headers.ts`: CSP (`default-src 'self'`, inline style attributes
+  allowed for UI primitives, `img-src https:` for identity-provider avatars,
+  `frame-ancestors 'none'`), `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options`, `Permissions-Policy`, HSTS on https.
+- `POST /api/client-errors` (public, rate limited) logs SPA errors at warn with the
+  session's user id when present.
+- `createApp({ pingDatabase, testRoutes })` lets tests exercise the 503 and 500 paths.
+- Request ids: inbound `x-request-id` is accepted only when it matches
+  `[A-Za-z0-9._:-]{8,128}`; otherwise a UUID is minted.
+
 ## Done when
 
 - A failing request can be traced from the browser error page to the log line by
