@@ -54,7 +54,9 @@ decision; a disabled-by-default scheduled job can prune rows older than
 
 ## Done when
 
-- Every write in the golden example produces exactly one row (bulk: one per record).
+- Every write in the golden example produces exactly one row (bulk: one per record);
+  `tests/server/customers.test.ts` asserts the count for create, update, delete and
+  restore.
 - A test helper `expectAudited(action, entityId)` exists and is used in feature tests.
 - The diff view handles added, removed and changed fields, nested objects rendered as
   JSON.

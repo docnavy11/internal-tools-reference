@@ -177,6 +177,8 @@ describe('job queue under concurrency (real pool, outside the test transaction)'
     const { schedules: schedulesTable } = await import('../../src/server/platform/jobs/table');
     const { syncSchedules: sync } = await import('../../src/server/platform/jobs/worker');
     const { eq: eqOp } = await import('drizzle-orm');
+    const { setTestTransaction } = await import('../../src/server/platform/db/client');
+    setTestTransaction(null); // three real transactions, so the advisory lock actually serialises them
     await sync(pool);
     await pool
       .update(schedulesTable)

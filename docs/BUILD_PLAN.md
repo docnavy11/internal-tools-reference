@@ -40,9 +40,10 @@ against real tenants; do that once a real client id exists and record it in bloc
 - Shell: sidebar, top bar, theme, toasts, login page, session provider, error
   boundary, not-found and no-access pages.
 
-Accept when: sign in with Google works against a real client id; block 01 and 02
-tests pass; Playwright logs in via dev login and reaches the users page as admin and
-is refused as viewer.
+Accept when: block 01 and 02 tests pass; Playwright logs in via dev login and reaches
+the users page as admin and is refused as viewer. Sign-in against a real Google or
+Microsoft tenant is a deployment-time check (`SECURITY.md`, "Not verified"), not
+something this repository can prove.
 
 ## Phase 3: CRUD kit, audit, customers example (large) — implemented 2026-09-04
 
@@ -53,8 +54,10 @@ with jobs. The "add a throwaway entity by following the recipe" acceptance step 
 start of phase 4 (see there).
 
 - `DataTable`, filter bar, `useListParams`, `EntityForm`, field components,
-  `DetailPage`, `HistoryTab`, `ConfirmDialog`, `EmptyState`, `StatusBadge`.
-- Server helpers: `listQuery`, `paginate`, `csvStream`, `parseCsv`.
+  `DetailPage`, `HistoryTab`, `ConfirmDialog`, `EmptyState`; status badges are per
+  entity (`CustomerStatusBadge`).
+- Server helpers: `parseListQuery`, `orderBy`/`offset`/`page`, `csvResponse`,
+  `parseCustomerCsv` (import parsing is per entity because columns differ).
 - `customers` in all three layers with list, detail, form, bulk status change, CSV
   export, soft delete, history.
 - Audit page with diff view.
@@ -81,8 +84,9 @@ into the recipe and into two code fixes (empty `.env` values, shared `userRefSch
 - CSV import for customers as a job.
 - `recipes/add-job.md` corrected.
 
-Accept when: block 06 tests pass including the two-worker exclusivity test; worker
-mode runs as a separate compose service and processes jobs from web mode.
+Accept when: block 06 tests pass including the multi-worker exclusivity and
+concurrent-scheduler tests; `docker compose --profile split up web worker` runs the two
+modes as separate services from the same image (verified 2026-09-04).
 
 ## Phase 5: storage and notifications, notes example (medium) — implemented 2026-09-04
 
@@ -99,7 +103,8 @@ uploads are refused before buffering.
 - `notes` as a child of customers with an attachment, shown as a detail tab.
 - Slack post on customer creation.
 
-Accept when: block 08 and 09 tests pass; a file round-trips with both drivers.
+Accept when: block 08 and 09 tests pass; a file round-trips with the disk driver under
+test and with the S3 driver against MinIO by hand (`docker compose --profile s3`).
 
 ## Phase 6: settings, integrations (medium) — implemented 2026-09-04
 

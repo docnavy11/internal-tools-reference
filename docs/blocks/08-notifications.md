@@ -44,10 +44,11 @@ Toasts for immediate feedback are in the UI shell. Persistent in-app notificatio
   `deliverEmail`/`deliverSlack` used by the jobs, plus `setEmailDriver`/`setSlackDriver`
   for tests. Slack errors in a known permanent set (`channel_not_found`,
   `not_in_channel`, `invalid_auth`, …) throw `NonRetryableError`.
-- nodemailer is pinned to 6.x (`adr/0002`): the two calls used, `createTransport(url)`
-  and `sendMail`, are unchanged across majors, and 6 is the version the builder knows.
-  The SMTP driver has not been exercised against a real mail server yet; the console
-  driver is what tests and development use.
+- nodemailer is pinned to 10.x. It was first pinned to 6.x for familiarity (`adr/0002`),
+  but 6 carries a high-severity advisory (SMTP command injection through the transport
+  `name` option, unused here), and the two calls used, `createTransport(url)` and
+  `sendMail`, are unchanged across majors, so the newer major was taken. The SMTP driver
+  has not been exercised against a real mail server yet.
 - Templates are still inline strings (magic link); a `templates/` module arrives when a
   second email exists.
 - Magic link and the customer follow-up job go through `notify`, with `{ tx }` so the

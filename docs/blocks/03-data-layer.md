@@ -49,7 +49,9 @@ savepoints). Tests never mock the database.
 
 ## Done when
 
-- `docker compose up` gives a migrated, seeded database.
-- Migration generation, apply, and rollback-by-new-migration are documented in the
-  recipe.
-- A drift test asserts the seed rows satisfy the shared Zod schemas.
+- `docker compose up` gives a migrated database (`MIGRATE_ON_START`); seeding is a
+  development step (`npm run db:seed`), never automatic.
+- Migration generation, apply, and rollback-by-new-migration are documented in
+  `recipes/add-entity.md` step 2.
+- A drift test asserts the seed rows satisfy the shared Zod schemas
+  (`tests/server/seed-drift.test.ts`).

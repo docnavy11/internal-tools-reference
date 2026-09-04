@@ -57,7 +57,7 @@ at build time and recorded in `package.json`.
 | UI | shadcn/ui on Tailwind CSS | shadcn CLI 4, Tailwind 4 | Components are copied into `src/client/platform/ui`. The CLI installs the unified `radix-ui` package, `class-variance-authority`, `lucide-react`, `tw-animate-css` and the Geist font. See `adr/0009`. |
 | Toasts | sonner | 2.x | Installed by the shadcn CLI; `ui/sonner.tsx` is rewired to the shell's own theme context so `next-themes` is not needed. |
 | Logging | pino | 9.x | JSON to stdout. |
-| Email | nodemailer over SMTP | 6.x | Works with any provider that offers SMTP. |
+| Email | nodemailer over SMTP | 10.x | Works with any provider that offers SMTP. See block 08 for why not 6. |
 | Slack | plain `fetch` to `chat.postMessage` | n/a | No SDK. |
 | Storage | `@aws-sdk/client-s3` + local disk driver | 3.x | S3-compatible: AWS, R2, MinIO. |
 | CSV | papaparse | 5.x | Import parsing and export. |

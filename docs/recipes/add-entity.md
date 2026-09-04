@@ -107,6 +107,11 @@ export const vendors = pgTable(
 Export it from `src/server/platform/db/schema.ts` (the registry Drizzle reads). Run
 `npm run db:generate`, read the SQL it produced, then `npm run db:migrate`.
 
+There is no "down" migration. To undo a change that has been applied anywhere, edit the
+table definition back and generate a new migration that reverses it; never edit or
+delete an applied migration file. Locally, before anything is committed,
+`npm run db:reset` rebuilds the development database from scratch.
+
 ## 3. Serializer and service
 
 Create `serialize.ts` with `serializeVendor(row, owner): Vendor` (dates to ISO strings,

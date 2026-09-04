@@ -193,7 +193,7 @@ export async function tickScheduler(now = new Date()): Promise<number> {
         logger.error({ schedule: s.name, jobName: s.jobName }, 'schedule points at an unknown job');
         continue;
       }
-      await enqueue(def, s.payload, {
+      const { deduped } = await enqueue(def, s.payload, {
         tx,
         dedupeKey: `schedule:${s.name}:${s.nextRunAt.toISOString()}`,
       });
@@ -201,7 +201,7 @@ export async function tickScheduler(now = new Date()): Promise<number> {
         .update(schedules)
         .set({ lastRunAt: s.nextRunAt, nextRunAt: nextRun(s.cron, now), updatedAt: now })
         .where(eq(schedules.name, s.name));
-      fired += 1;
+      if (!deduped) fired += 1;
     }
     return fired;
   });

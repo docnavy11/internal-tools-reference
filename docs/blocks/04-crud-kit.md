@@ -101,4 +101,5 @@ holds only shadcn output.
   invalid rows with line numbers.
 - Bulk status change on selected rows works and is audited per row.
 - Tests: list params parsing, sort allowlist enforced, CSV escaping, import row
-  validation, PATCH with unknown field rejected.
+  validation, PATCH with unknown fields ignored (Zod strips unknown keys so clients can
+  send a whole record back; `tests/server/customers.test.ts` asserts this).
