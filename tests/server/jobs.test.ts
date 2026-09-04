@@ -408,7 +408,7 @@ describe('customers CSV import', () => {
     const res = await upload(
       member.cookie,
       csv([
-        'Alpha,alpha@example.com,active,pro,vip;eu,owner@example.com,First',
+        'Alpha,alpha@example.com,active,pro,vip;eu,Owner@Example.com,First',
         ',missing@example.com,active,pro,,,',
         'Gamma,not-an-email,bogus,free,,,',
         'Delta,,,,,nobody@example.com,',

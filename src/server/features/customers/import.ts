@@ -45,7 +45,10 @@ export const importCustomers = defineJob(
     const failed: { line: number; error: string }[] = [];
     let created = 0;
     // Resolve owners once. Unknown owner emails fail their row rather than the job.
-    const ownerEmails = [...new Set(rows.map((r) => r.data.owner).filter((e): e is string => !!e))];
+    // Stored emails are lower-cased (see auth/policy.ts); compare case-insensitively.
+    const ownerEmails = [
+      ...new Set(rows.map((r) => r.data.owner?.toLowerCase()).filter((e): e is string => !!e)),
+    ];
     const owners = ownerEmails.length
       ? await getDb()
           .select({ id: users.id, email: users.email })
