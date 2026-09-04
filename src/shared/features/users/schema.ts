@@ -48,3 +48,12 @@ export const userSortColumns = [
   'lastLoginAt',
   'createdAt',
 ] as const;
+
+// GET /api/users/options: id, name, email of active users, for owner pickers.
+// Any signed-in user may call it; it exposes nothing beyond what colleagues see anyway.
+export const userOptionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().nullable(),
+  email: z.string().email(),
+});
+export type UserOption = z.infer<typeof userOptionSchema>;

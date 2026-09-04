@@ -15,8 +15,8 @@ export type Permission = (typeof permissions)[number];
 
 export const rolePermissions: Record<Role, readonly Permission[]> = {
   admin: permissions,
-  member: [],
-  viewer: [],
+  member: ['customers:read', 'customers:write'],
+  viewer: ['customers:read'],
 };
 
 export const userStatuses = ['active', 'disabled'] as const;
