@@ -50,6 +50,10 @@ Update this section as phases land.
   (`adr/0008`).
 - The Vite client bundle must never import from `src/server`. Shared code goes in
   `src/shared` and must not use Node or DOM APIs.
+- Import CommonJS packages (`pg`, `cron-parser`, `papaparse`, `nodemailer`) by their
+  default export and destructure; named imports from CJS work under tsx and Vitest but
+  fail in the esbuild bundle Node runs in production. Playwright runs the bundle, which is
+  why `npm run test:e2e` is part of the definition of done.
 - CLI entry points go in `src/server/scripts/` only. Never detect "run directly" with
   `import.meta.url` in a library module: the server is bundled into one file, so the
   check is always true and the code runs on import.
