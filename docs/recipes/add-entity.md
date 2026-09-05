@@ -158,12 +158,15 @@ Create `src/client/features/vendors/` by copying `src/client/features/customers/
   the filter bar, bulk actions, then `<DataTable …/>`.
 - `detail.tsx`: `DetailPage` with `FieldList`, tabs Details and History
   (`HistoryTab` pointed at `/api/vendors/:id/history`), actions edit, delete, restore.
-- `form.tsx`: one `EntityForm` over `vendorInput` with field components from
-  `client/platform/form`, exported as a create page and an edit page.
+  Edit switches the Details tab into the form in place (`?edit=1` in the URL); there is
+  no separate edit page.
+- `form.tsx`: one set of fields over `vendorInput` from `client/platform/form`, exported
+  as `VendorCreatePage` and `VendorEditForm({ record, onDone })` (used by `detail.tsx`).
 - `nav.ts`: exports a named `NavEntry` constant (`vendorsNav`).
-- `routes.tsx`: exports `vendorRoutes: RouteObject[]`, every element wrapped in
-  `RequirePermission`, `handle.title` for breadcrumbs, page components loaded with
-  `lazyPage(() => import('./list'), 'VendorsListPage')` so each route is its own chunk.
+- `routes.tsx`: exports `vendorRoutes: RouteObject[]` for `/vendors`, `/vendors/new` and
+  `/vendors/:id`, every element wrapped in `RequirePermission`, `handle.title` for
+  breadcrumbs, page components loaded with `lazyPage(() => import('./list'), 'VendorsListPage')`
+  so each route is its own chunk.
 - `palette.ts` (optional): `registerPaletteSource({ label, permission, search })` so the
   command palette finds vendors by name; one import line in
   `platform/shell/command-palette.tsx`.

@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router';
+import { Navigate, useParams, type RouteObject } from 'react-router';
 import { RequirePermission } from '@/client/platform/auth/require-auth';
 import { lazyPage } from '@/client/platform/shell/lazy-page';
 
@@ -7,22 +7,18 @@ import { lazyPage } from '@/client/platform/shell/lazy-page';
  * wrapped in `RequirePermission`, which renders the no-access page rather than
  * redirecting; the server checks the same permission on every request.
  *
- * The pages are lazy, so the feature is its own bundle chunk and the shell does not pay
- * for it. `AppShell` supplies the `Suspense` fallback.
- *
- * `handle.title` is what the breadcrumb shows.
+ * Pages are lazy so each route is its own bundle chunk. `handle.title` is what the
+ * breadcrumb shows. Editing happens on the detail page (`?edit=1`), not on a route of
+ * its own; the old `/edit` address redirects there for bookmarks.
  */
+const CustomersListPage = lazyPage(() => import('./list'), 'CustomersListPage');
+const CustomerDetailPage = lazyPage(() => import('./detail'), 'CustomerDetailPage');
+const CustomerCreatePage = lazyPage(() => import('./form'), 'CustomerCreatePage');
 
-const list = () => import('@/client/features/customers/list');
-const form = () => import('@/client/features/customers/form');
-
-const CustomersListPage = lazyPage(list, 'CustomersListPage');
-const CustomerDetailPage = lazyPage(
-  () => import('@/client/features/customers/detail'),
-  'CustomerDetailPage',
-);
-const CustomerCreatePage = lazyPage(form, 'CustomerCreatePage');
-const CustomerEditPage = lazyPage(form, 'CustomerEditPage');
+function EditRedirect() {
+  const { id = '' } = useParams();
+  return <Navigate to={`/customers/${id}?edit=1`} replace />;
+}
 
 export const customerRoutes: RouteObject[] = [
   {
@@ -55,15 +51,7 @@ export const customerRoutes: RouteObject[] = [
           </RequirePermission>
         ),
       },
-      {
-        path: ':id/edit',
-        handle: { title: 'Edit' },
-        element: (
-          <RequirePermission permission="customers:write">
-            <CustomerEditPage />
-          </RequirePermission>
-        ),
-      },
+      { path: ':id/edit', element: <EditRedirect /> },
     ],
   },
 ];

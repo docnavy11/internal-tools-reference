@@ -78,14 +78,16 @@ test.describe.serial('customers', () => {
     const customer = await createCustomer(page.request, name);
 
     await page.goto(`/customers/${customer.id}`);
-    await page.getByRole('link', { name: 'Edit' }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+    // Editing happens on the same page; the mode lives in the URL.
+    await expect(page).toHaveURL(`/customers/${customer.id}?edit=1`);
     await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
-    await expect(page).toHaveURL(`/customers/${customer.id}/edit`);
 
     await page.getByLabel('Name', { exact: true }).fill(`${name} Holdings`);
     await page.getByRole('button', { name: 'Save changes' }).click();
 
     await expect(page).toHaveURL(`/customers/${customer.id}`);
+    await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: `${name} Holdings` })).toBeVisible();
 
     await page.getByRole('tab', { name: 'History' }).click();
@@ -204,7 +206,7 @@ test.describe.serial('customers', () => {
     await expect(page).toHaveURL(/\/customers\/[0-9a-f-]{36}$/);
 
     const id = page.url().split('/').pop()!;
-    await expect(page.getByRole('link', { name: 'Edit' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
 
     // The hidden control is convenience; the server is the boundary.

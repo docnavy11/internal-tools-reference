@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { PencilIcon, RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastError } from '@/client/platform/api/errors';
@@ -12,6 +12,7 @@ import { LoadingPage, NotFoundPage } from '@/client/platform/shell/states';
 import { Badge } from '@/client/platform/ui/badge';
 import { Button } from '@/client/platform/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/client/platform/ui/tabs';
+import { CustomerEditForm } from '@/client/features/customers/form';
 import { CustomerStatusBadge } from '@/client/features/customers/list';
 import { NotesTab } from '@/client/features/notes/notes-tab';
 import {
@@ -54,6 +55,20 @@ export function CustomerDetailPage() {
   const deleted = record.deletedAt !== null;
   const requestedTab = currentTab(searchParams.get('tab'));
   const openTab = requestedTab === 'notes' && !mayReadNotes ? 'details' : requestedTab;
+  // Editing happens here, in place. `?edit=1` keeps it in the URL like the open tab.
+  const editing = searchParams.get('edit') === '1' && mayWrite && !deleted;
+  const setEditing = (on: boolean) =>
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (on) {
+          next.set('edit', '1');
+          next.delete('tab');
+        } else next.delete('edit');
+        return next;
+      },
+      { replace: true },
+    );
 
   const onDelete = async () => {
     try {
@@ -90,12 +105,10 @@ export function CustomerDetailPage() {
         }
         actions={
           <>
-            {mayWrite && !deleted ? (
-              <Button asChild size="sm" variant="outline">
-                <Link to={`/customers/${record.id}/edit`}>
-                  <PencilIcon />
-                  Edit
-                </Link>
+            {mayWrite && !deleted && !editing ? (
+              <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                <PencilIcon />
+                Edit
               </Button>
             ) : null}
             {mayDelete && deleted ? (
@@ -120,7 +133,7 @@ export function CustomerDetailPage() {
       >
         <Tabs
           // The open tab lives in the URL so a link can point straight at the notes.
-          value={openTab}
+          value={editing ? 'details' : openTab}
           onValueChange={(value) =>
             setSearchParams(
               (previous) => {
@@ -147,42 +160,46 @@ export function CustomerDetailPage() {
           </TabsList>
 
           <TabsContent value="details" className="pt-6">
-            <FieldList
-              items={[
-                { label: 'Name', value: record.name },
-                { label: 'Email', value: record.email },
-                { label: 'Status', value: <CustomerStatusBadge status={record.status} /> },
-                { label: 'Plan', value: <span className="capitalize">{record.plan}</span> },
-                {
-                  label: 'Tags',
-                  value:
-                    record.tags.length === 0 ? null : (
-                      <div className="flex flex-wrap gap-1">
-                        {record.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="font-normal">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    ),
-                },
-                { label: 'Owner', value: record.owner ? userOptionLabel(record.owner) : null },
-                {
-                  label: 'Notes',
-                  value: record.notes ? (
-                    <p className="whitespace-pre-wrap">{record.notes}</p>
-                  ) : null,
-                },
-                { label: 'Created', value: <RelativeTime value={record.createdAt} /> },
-                {
-                  label: 'Updated',
-                  value: <RelativeTime value={record.updatedAt} fallback="Never" />,
-                },
-                ...(deleted
-                  ? [{ label: 'Deleted', value: <RelativeTime value={record.deletedAt} /> }]
-                  : []),
-              ]}
-            />
+            {editing ? (
+              <CustomerEditForm record={record} onDone={() => setEditing(false)} />
+            ) : (
+              <FieldList
+                items={[
+                  { label: 'Name', value: record.name },
+                  { label: 'Email', value: record.email },
+                  { label: 'Status', value: <CustomerStatusBadge status={record.status} /> },
+                  { label: 'Plan', value: <span className="capitalize">{record.plan}</span> },
+                  {
+                    label: 'Tags',
+                    value:
+                      record.tags.length === 0 ? null : (
+                        <div className="flex flex-wrap gap-1">
+                          {record.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="font-normal">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ),
+                  },
+                  { label: 'Owner', value: record.owner ? userOptionLabel(record.owner) : null },
+                  {
+                    label: 'Notes',
+                    value: record.notes ? (
+                      <p className="whitespace-pre-wrap">{record.notes}</p>
+                    ) : null,
+                  },
+                  { label: 'Created', value: <RelativeTime value={record.createdAt} /> },
+                  {
+                    label: 'Updated',
+                    value: <RelativeTime value={record.updatedAt} fallback="Never" />,
+                  },
+                  ...(deleted
+                    ? [{ label: 'Deleted', value: <RelativeTime value={record.deletedAt} /> }]
+                    : []),
+                ]}
+              />
+            )}
           </TabsContent>
 
           {mayReadNotes ? (

@@ -54,7 +54,8 @@ columns declared in `service.ts`.
   arrives with storage in phase 5; a date field is added when an entity needs one.
 
 `DetailPage`
-- `PageHeader` with title, status badge, actions menu (edit, delete, custom).
+- `PageHeader` with title, status badge, actions (edit, delete, custom). Edit is a mode
+  of the detail page (`?edit=1` swaps the field list for the form), not a separate route.
 - `FieldList` for read-only display of a record.
 - `Tabs` with a `HistoryTab` that renders `/history` as a timeline with before and
   after diffs.

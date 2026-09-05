@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import type { z } from 'zod';
 import { EntityForm } from '@/client/platform/form';
 import {
@@ -9,7 +9,6 @@ import {
   UserPickerField,
 } from '@/client/platform/form';
 import { PageHeader } from '@/client/platform/shell/page-header';
-import { LoadingPage, NotFoundPage } from '@/client/platform/shell/states';
 import { Button } from '@/client/platform/ui/button';
 import {
   customerInput,
@@ -17,11 +16,11 @@ import {
   customerStatuses,
   type Customer,
 } from '@/shared/features/customers/schema';
-import { useCreateCustomer, useCustomer, useUpdateCustomer } from '@/client/features/customers/api';
+import { useCreateCustomer, useUpdateCustomer } from '@/client/features/customers/api';
 
 /**
  * Create and edit share one set of fields and one schema (`customerInput`). The edit
- * page sends the whole object as a PATCH, which `customerPatch` accepts because it is a
+ * form sends the whole object as a PATCH, which `customerPatch` accepts because it is a
  * partial of the same shape.
  */
 
@@ -100,39 +99,40 @@ export function CustomerCreatePage() {
   );
 }
 
-export function CustomerEditPage() {
-  const { id = '' } = useParams();
-  const navigate = useNavigate();
-  const customer = useCustomer(id);
-  const update = useUpdateCustomer(id);
+/** Field values for editing an existing record. */
+export function customerFormValues(record: Customer): CustomerFormValues {
+  return {
+    name: record.name,
+    email: record.email,
+    status: record.status,
+    plan: record.plan,
+    tags: record.tags,
+    ownerId: record.owner?.id ?? null,
+    notes: record.notes,
+  };
+}
 
-  if (customer.isPending) return <LoadingPage label="Loading customer" />;
-  if (customer.isError) return <NotFoundPage />;
-
-  const record = customer.data;
-
+/**
+ * Editing happens on the detail page, in place: the Details tab swaps its field list for
+ * this form and swaps back on save or cancel. There is no separate edit page.
+ */
+export function CustomerEditForm({ record, onDone }: { record: Customer; onDone: () => void }) {
+  const update = useUpdateCustomer(record.id);
   return (
-    <>
-      <PageHeader title={`Edit ${record.name}`} />
-      <EntityForm<CustomerFormValues, z.output<typeof customerInput>, Customer>
-        schema={customerInput}
-        defaultValues={{
-          name: record.name,
-          email: record.email,
-          status: record.status,
-          plan: record.plan,
-          tags: record.tags,
-          ownerId: record.owner?.id ?? null,
-          notes: record.notes,
-        }}
-        onSubmit={(values) => update.mutateAsync(values)}
-        successMessage="Changes saved."
-        onSuccess={() => void navigate(`/customers/${id}`)}
-        submitLabel="Save changes"
-        secondaryAction={<CancelButton to={`/customers/${id}`} />}
-      >
-        <CustomerFields />
-      </EntityForm>
-    </>
+    <EntityForm<CustomerFormValues, z.output<typeof customerInput>, Customer>
+      schema={customerInput}
+      defaultValues={customerFormValues(record)}
+      onSubmit={(values) => update.mutateAsync(values)}
+      successMessage="Changes saved."
+      onSuccess={onDone}
+      submitLabel="Save changes"
+      secondaryAction={
+        <Button type="button" variant="ghost" onClick={onDone}>
+          Cancel
+        </Button>
+      }
+    >
+      <CustomerFields />
+    </EntityForm>
   );
 }

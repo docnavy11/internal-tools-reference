@@ -329,8 +329,8 @@ are in `SECURITY.md`.
 Two features ship with the template and are meant to be deleted or renamed:
 
 - `customers`: name, email, status (enum), plan (enum), notes count, tags (text
-  array), owner (user FK). Exercises list with filters and CSV export, detail page,
-  create and edit form, bulk status change, soft delete, audit history, a nightly
+  array), owner (user FK). Exercises list with filters and CSV export, detail page with
+  editing in place, create form, bulk status change, soft delete, audit history, a nightly
   job that recomputes a derived field, and a Slack message on creation.
 - `notes` (child of customers): body, author, optional file attachment. Exercises a
   parent-child relation, a tab on the detail page, file upload and download.
