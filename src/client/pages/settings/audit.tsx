@@ -119,6 +119,7 @@ export function AuditPage() {
       <DataTable
         queryKey={['audit', 'list']}
         fetchPage={(search) => api<Page<AuditEntry>>(`/api/audit?${search.toString()}`)}
+        exportUrl={(params) => `/api/audit?${params.toString()}&format=csv`}
         columns={columns}
         list={list}
         sortColumns={auditSortColumns}

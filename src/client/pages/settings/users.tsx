@@ -109,6 +109,7 @@ export function UsersPage() {
       <DataTable
         queryKey={usersListKey}
         fetchPage={fetchUserPage}
+        exportUrl={(params) => `/api/users?${params.toString()}&format=csv`}
         columns={columns}
         list={list}
         sortColumns={userSortColumns}

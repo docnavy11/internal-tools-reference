@@ -72,6 +72,10 @@ holds only shadcn output.
 - `csvResponse(c, filename, columns, asyncIterable)` in `platform/csv/stream.ts` streams
   rows in batches, prefixes cells starting with `= + - @` with an apostrophe (formula
   injection), joins arrays with `;`, and follows the list's `sort`/`order`.
+- Every list endpoint (`/api/customers`, `/api/users`, `/api/audit`, `/api/jobs`,
+  `/api/webhooks`) accepts `format=csv` and streams all rows matching the current filters
+  and sort; `iteratePages()` in `platform/csv/stream.ts` walks an existing list function so
+  an export never needs its own query. Every list page shows the Export CSV button.
 - Bulk actions are a Zod discriminated union; each affected record gets its own audit
   row with `metadata.bulk` set, and no-op changes are skipped.
 - `POST /:id/restore` complements soft delete. PATCH on a deleted record is 409 `deleted`.

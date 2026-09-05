@@ -103,6 +103,7 @@ export function WebhooksPage() {
       <DataTable
         queryKey={webhooksListKey}
         fetchPage={fetchWebhookPage}
+        exportUrl={(params) => `/api/webhooks?${params.toString()}&format=csv`}
         columns={webhookColumns(setOpenEvent)}
         list={list}
         sortColumns={webhookSortColumns}

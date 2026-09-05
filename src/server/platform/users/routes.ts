@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import type { User } from '../../../shared/features/users/schema';
 import {
   inviteUserInput,
   updateUserInput,
@@ -7,6 +8,7 @@ import {
   userSortColumns,
 } from '../../../shared/features/users/schema';
 import { requireAuth, requirePermission } from '../auth/middleware';
+import { csvFilename, csvResponse, iteratePages } from '../csv/stream';
 import { parseListQuery } from '../http/list';
 import { validate } from '../http/validate';
 import type { AppEnv } from '../http/types';
@@ -23,6 +25,22 @@ export function userRoutes(): Hono<AppEnv> {
 
   r.get('/users', manage, async (c) => {
     const params = parseListQuery(c.req.query(), userFilters, userSortColumns);
+    if (c.req.query('format') === 'csv') {
+      return csvResponse(
+        c,
+        csvFilename('users'),
+        [
+          { header: 'id', value: (u: User) => u.id },
+          { header: 'email', value: (u: User) => u.email },
+          { header: 'name', value: (u: User) => u.name },
+          { header: 'role', value: (u: User) => u.role },
+          { header: 'status', value: (u: User) => u.status },
+          { header: 'lastLoginAt', value: (u: User) => u.lastLoginAt },
+          { header: 'createdAt', value: (u: User) => u.createdAt },
+        ],
+        iteratePages((page, pageSize) => listUsers({ ...params, page, pageSize })),
+      );
+    }
     return c.json(await listUsers(params));
   });
 

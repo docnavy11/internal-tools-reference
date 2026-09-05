@@ -44,3 +44,16 @@ export function csvResponse<T>(
 export function csvFilename(base: string): string {
   return `${base}-${new Date().toISOString().slice(0, 10)}.csv`;
 }
+
+// Every row a paged list function would return, page by page, for exports. The list
+// function already applies the caller's filters and sort; only the paging changes.
+export async function* iteratePages<T>(
+  fetchPage: (page: number, pageSize: number) => Promise<{ items: T[]; total: number }>,
+  pageSize = 200,
+): AsyncGenerator<T> {
+  for (let page = 1; ; page++) {
+    const result = await fetchPage(page, pageSize);
+    for (const item of result.items) yield item;
+    if (result.items.length < pageSize || page * pageSize >= result.total) return;
+  }
+}

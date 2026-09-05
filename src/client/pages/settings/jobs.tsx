@@ -152,6 +152,7 @@ function JobsTab() {
       <DataTable
         queryKey={jobsListKey}
         fetchPage={fetchJobPage}
+        exportUrl={(params) => `/api/jobs?${params.toString()}&format=csv`}
         columns={columns}
         list={list}
         sortColumns={jobSortColumns}
