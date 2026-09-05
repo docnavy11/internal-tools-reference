@@ -3,6 +3,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
+// Tooling variables (VITE_HOST, VITE_ALLOWED_HOSTS, PORT) may live in .env like the rest.
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // no .env: rely on the process environment
+}
+
 // The API server runs on PORT (default 3000). In development Vite serves the
 // client on 5174 and proxies API calls so the browser sees one origin.
 const apiTarget = `http://localhost:${process.env.PORT ?? '3000'}`;
