@@ -13,7 +13,7 @@ describe('CSV exports of the platform lists', () => {
     expect(res.headers.get('content-disposition')).toMatch(
       /attachment; filename="[a-z-]+-\d{4}-\d{2}-\d{2}\.csv"/,
     );
-    const text = (await res.text()).replace(/^﻿/, '').trim();
+    const text = (await res.text()).replace(/^\uFEFF/, '').trim();
     return text.split('\r\n');
   }
 
