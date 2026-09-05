@@ -14,6 +14,14 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
+    // To use the dev server from another machine: VITE_HOST=true exposes it on all
+    // interfaces and VITE_ALLOWED_HOSTS lists the hostnames browsers will use (Vite blocks
+    // unknown Host headers). Set APP_URL to that hostname too, or the API's Origin check
+    // refuses state-changing requests.
+    host: process.env.VITE_HOST === 'true' ? true : undefined,
+    allowedHosts: process.env.VITE_ALLOWED_HOSTS
+      ? process.env.VITE_ALLOWED_HOSTS.split(',')
+      : undefined,
     proxy: { '/api': apiTarget, '/healthz': apiTarget, '/readyz': apiTarget },
   },
   build: { outDir: '../../dist/client', emptyOutDir: true, sourcemap: true },
