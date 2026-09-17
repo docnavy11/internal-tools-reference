@@ -10,6 +10,8 @@ Status: all seven phases of `docs/BUILD_PLAN.md` implemented. 120 unit and API t
 31 end-to-end tests, all green against Postgres. No tool has been built on it yet —
 the golden example works, but the seams have not been pulled on by a real project.
 
+![The customers page: the golden example entity, with filters, tags, soft delete and CSV import](docs/screenshot.png)
+
 Stack in one line: TypeScript, React with Vite, Hono, Postgres with Drizzle,
 shadcn/ui on Tailwind 4, one Docker image that runs anywhere.
 
