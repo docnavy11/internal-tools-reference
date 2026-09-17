@@ -6,7 +6,9 @@ login, roles and permissions, tables and forms with validation, audit history,
 background jobs and schedules, file uploads, email and Slack, settings and feature
 flags, structured logging, and a UI shell.
 
-Status: all seven phases of `docs/BUILD_PLAN.md` implemented. 116 unit and API tests, 31 end-to-end tests.
+Status: all seven phases of `docs/BUILD_PLAN.md` implemented. 120 unit and API tests,
+31 end-to-end tests, all green against Postgres. No tool has been built on it yet —
+the golden example works, but the seams have not been pulled on by a real project.
 
 Stack in one line: TypeScript, React with Vite, Hono, Postgres with Drizzle,
 shadcn/ui on Tailwind 4, one Docker image that runs anywhere.
@@ -68,3 +70,11 @@ deployment before inviting users.
 - `docs/SECURITY.md`: security invariants, the review findings, what is not verified.
 - `docs/ACCEPTANCE.md`: per block, what has a test, what was checked by hand, what is not verified.
 - `CLAUDE.md`: the rule book for changing the repo.
+
+## Contributing and licence
+
+Bug reports and documentation fixes are welcome; see `CONTRIBUTING.md` for what is worth
+sending back to a template you are meant to fork. Security issues go through a private
+advisory, not a public issue — `SECURITY.md`.
+
+MIT licensed. Do what you like with it.
