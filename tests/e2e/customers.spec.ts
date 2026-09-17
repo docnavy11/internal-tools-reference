@@ -35,6 +35,10 @@ function row(page: Page, name: string) {
   return page.getByRole('row').filter({ hasText: name });
 }
 
+function headerAction(page: Page) {
+  return page.locator('[data-slot="page-header-actions"]');
+}
+
 test.describe.serial('customers', () => {
   test.beforeAll(async ({ request }) => {
     await signIn(request, ADMIN);
@@ -45,7 +49,7 @@ test.describe.serial('customers', () => {
     await signIn(page.request, ADMIN);
 
     await page.goto('/customers');
-    await page.getByRole('link', { name: 'New customer' }).click();
+    await headerAction(page).getByRole('link', { name: 'New customer' }).click();
     await expect(page).toHaveURL('/customers/new');
     // Routes are code-split: the previous page stays visible until the form chunk renders.
     await expect(page.getByRole('button', { name: 'Create customer' })).toBeVisible();
@@ -190,6 +194,24 @@ test.describe.serial('customers', () => {
     await expect(page.getByText(name).first()).toBeVisible();
   });
 
+  test('an empty list offers its own New customer link, and the header one still works', async ({
+    page,
+  }) => {
+    // Regression: both links point at /customers/new and carry the same
+    // accessible name, so an unscoped getByRole matched two elements and the
+    // click failed — but only on a run where the list happened to be empty.
+    await signIn(page.request, ADMIN);
+    await page.goto(`/customers?q=${encodeURIComponent('no-such-customer-' + suffix())}`);
+
+    await expect(page.getByText('No customers match')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'New customer' })).toHaveCount(2);
+
+    const header = headerAction(page).getByRole('link', { name: 'New customer' });
+    await expect(header).toHaveCount(1);
+    await header.click();
+    await expect(page).toHaveURL('/customers/new');
+  });
+
   test('a member may create but is not offered delete, and the API refuses it', async ({
     page,
   }) => {
@@ -197,7 +219,7 @@ test.describe.serial('customers', () => {
     await signIn(page.request, MEMBER);
 
     await page.goto('/customers');
-    await expect(page.getByRole('link', { name: 'New customer' })).toBeVisible();
+    await expect(headerAction(page).getByRole('link', { name: 'New customer' })).toBeVisible();
 
     await page.goto('/customers/new');
     await expect(page.getByRole('button', { name: 'Create customer' })).toBeVisible();
@@ -232,7 +254,7 @@ test.describe.serial('customers', () => {
 
     await page.goto('/customers');
     await expect(page.getByRole('heading', { name: 'Customers' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'New customer' })).toHaveCount(0);
+    await expect(headerAction(page).getByRole('link', { name: 'New customer' })).toHaveCount(0);
 
     const res = await page.request.post('/api/customers', {
       data: { name: 'Not allowed', email: null },

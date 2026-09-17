@@ -7,7 +7,7 @@ background jobs and schedules, file uploads, email and Slack, settings and featu
 flags, structured logging, and a UI shell.
 
 Status: all seven phases of `docs/BUILD_PLAN.md` implemented. 120 unit and API tests,
-31 end-to-end tests, all green against Postgres. No tool has been built on it yet —
+32 end-to-end tests, all green against Postgres. No tool has been built on it yet —
 the golden example works, but the seams have not been pulled on by a real project.
 
 ![The customers page: the golden example entity, with filters, tags, soft delete and CSV import](docs/screenshot.png)
