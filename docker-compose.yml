@@ -6,7 +6,9 @@ services:
       POSTGRES_PASSWORD: app
       POSTGRES_DB: app
     ports:
-      - '5439:5432'
+      - '127.0.0.1:5439:5432'
+      - '[::1]:5439:5432'
+      - '100.121.192.61:5439:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
@@ -33,7 +35,9 @@ services:
       STORAGE_DRIVER: disk
       FILES_DIR: /app/data/files
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
+      - '[::1]:3000:3000'
+      - '100.121.192.61:3000:3000'
     volumes:
       - app-files:/app/data/files
 
@@ -64,8 +68,12 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '127.0.0.1:9000:9000'
+      - '[::1]:9000:9000'
+      - '100.121.192.61:9000:9000'
+      - '127.0.0.1:9001:9001'
+      - '[::1]:9001:9001'
+      - '100.121.192.61:9001:9001'
     volumes:
       - minio-data:/data
 
